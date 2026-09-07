@@ -1,0 +1,60 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Livres{% endblock %}
+
+{% block admin_content %}
+<div class="flex items-center justify-between gap-4">
+    <h1 class="text-xl font-semibold">Livres <span class="text-slate-400 font-normal">({{ total }})</span></h1>
+    <a href="{{ path('admin_book_new') }}" class="text-sm text-emerald-700 hover:underline">Ajouter sans scanner</a>
+</div>
+
+<form method="get" class="mt-4 flex gap-2">
+    <input type="search" name="q" value="{{ criteria.query }}" placeholder="Titre, auteur, ISBN, éditeur…"
+           class="flex-1 rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+    <button type="submit" class="rounded-lg bg-slate-800 px-4 py-2 font-medium text-white hover:bg-slate-900">Chercher</button>
+</form>
+
+{% if total == 0 %}
+    <p class="mt-6 rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
+        Aucun livre. <a href="{{ path('admin_book_scan') }}" class="text-emerald-700 hover:underline">Scannez le premier</a>.
+    </p>
+{% else %}
+    <ul class="mt-4 divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+        {% for book in books %}
+            <li class="flex items-center gap-3 px-4 py-3">
+                {% if book.primaryImage and book.primaryImage.imageName %}
+                    <img src="{{ vich_uploader_asset(book.primaryImage, 'imageFile') }}" alt=""
+                         class="h-14 w-10 shrink-0 rounded object-cover border border-slate-200">
+                {% else %}
+                    <div class="h-14 w-10 shrink-0 rounded bg-slate-100 border border-slate-200"></div>
+                {% endif %}
+
+                <div class="min-w-0 flex-1">
+                    <p class="truncate font-medium">{{ book.title }}</p>
+                    <p class="truncate text-sm text-slate-500">
+                        {{ book.authorNames|default('Auteur inconnu') }}
+                        {% if book.publishedYear %} · {{ book.publishedYear }}{% endif %}
+                    </p>
+                    {% if not book.available %}
+                        <span class="mt-1 inline-block rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
+                            Prêté à {{ book.activeLoan.borrowerName }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <a href="{{ path('admin_book_edit', {id: book.id}) }}"
+                   class="shrink-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50">Modifier</a>
+            </li>
+        {% endfor %}
+    </ul>
+
+    {% if pageCount > 1 %}
+        <div class="mt-4 flex flex-wrap gap-1">
+            {% for p in 1..pageCount %}
+                <a href="{{ path('admin_book_index', {q: criteria.query, page: p}) }}"
+                   class="rounded px-3 py-1.5 text-sm {{ p == criteria.page ? 'bg-slate-800 text-white' : 'border border-slate-300 hover:bg-slate-50' }}">{{ p }}</a>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endif %}
+{% endblock %}

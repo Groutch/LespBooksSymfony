@@ -1,0 +1,35 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/book/_form_fields.html.twig' as fields %}
+
+{% block title %}Modifier « {{ book.title }} »{% endblock %}
+
+{% block admin_content %}
+<div class="flex items-center justify-between gap-4">
+    <h1 class="text-xl font-semibold">Modifier « {{ book.title }} »</h1>
+    <a href="{{ path('admin_book_index') }}" class="text-sm text-slate-600 hover:text-slate-900">Retour à la liste</a>
+</div>
+
+{{ form_start(form, {attr: {class: 'mt-5 rounded-xl border border-slate-200 bg-white p-4'}}) }}
+    {% if book.primaryImage and book.primaryImage.imageName %}
+        <img src="{{ vich_uploader_asset(book.primaryImage, 'imageFile') }}" alt="Couverture de {{ book.title }}"
+             class="mb-4 h-40 w-auto rounded border border-slate-200">
+    {% endif %}
+
+    {{ fields.fields(form, knownCategories) }}
+
+    <div class="mt-5 flex flex-wrap gap-2">
+        <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700">
+            Enregistrer
+        </button>
+        <a href="{{ path('admin_book_index') }}" class="rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-700 hover:bg-slate-50">
+            Annuler
+        </a>
+    </div>
+{{ form_end(form) }}
+
+<form method="post" action="{{ path('admin_book_delete', {id: book.id}) }}" class="mt-6"
+      onsubmit="return confirm('Supprimer définitivement « {{ book.title|e('js') }} » ? Cette action est irréversible.');">
+    <input type="hidden" name="_token" value="{{ csrf_token('supprimer-livre-' ~ book.id) }}">
+    <button type="submit" class="text-sm text-red-700 hover:underline">Supprimer ce livre</button>
+</form>
+{% endblock %}

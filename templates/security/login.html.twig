@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex items-center justify-center bg-slate-100 px-4">
+    <div class="w-full max-w-sm">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h1 class="text-xl font-semibold text-slate-900">Administration</h1>
+            <p class="mt-1 text-sm text-slate-500">Bibliothèque de Lespouey</p>
+
+            {% if error %}
+                <p class="mt-4 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+                    {{ error.messageKey|trans(error.messageData, 'security') }}
+                </p>
+            {% endif %}
+
+            <form method="post" class="mt-5 space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-slate-700">Adresse e-mail</label>
+                    <input type="email" id="username" name="_username" value="{{ last_username }}"
+                           autocomplete="email" required autofocus
+                           class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-slate-700">Mot de passe</label>
+                    <input type="password" id="password" name="_password" autocomplete="current-password" required
+                           class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                </div>
+
+                <label class="flex items-center gap-2 text-sm text-slate-600">
+                    <input type="checkbox" name="_remember_me" class="rounded border-slate-300">
+                    Rester connecté
+                </label>
+
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                <button type="submit"
+                        class="w-full rounded-lg bg-emerald-600 px-4 py-2.5 font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
+                    Se connecter
+                </button>
+            </form>
+        </div>
+
+        <p class="mt-4 text-center text-sm text-slate-500">
+            <a href="{{ path('home') }}" class="hover:text-slate-700">Retour au catalogue</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

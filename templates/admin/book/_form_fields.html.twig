@@ -1,0 +1,28 @@
+{% macro fields(form, knownCategories) %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2">{{ form_row(form.title) }}</div>
+        <div class="sm:col-span-2">{{ form_row(form.subtitle) }}</div>
+        <div class="sm:col-span-2">{{ form_row(form.authorsText) }}</div>
+
+        <div class="sm:col-span-2">
+            {{ form_row(form.categoriesText, {attr: {list: 'categories-connues'}}) }}
+            <datalist id="categories-connues">
+                {% for category in knownCategories %}
+                    <option value="{{ category.name }}"></option>
+                {% endfor %}
+            </datalist>
+        </div>
+
+        {{ form_row(form.genre) }}
+        {{ form_row(form.shelfLocation) }}
+        {{ form_row(form.isbn13) }}
+        {{ form_row(form.isbn10) }}
+        {{ form_row(form.publisher) }}
+        {{ form_row(form.publishedYear) }}
+        {{ form_row(form.pageCount) }}
+        {{ form_row(form.language) }}
+
+        <div class="sm:col-span-2">{{ form_row(form.description) }}</div>
+        <div class="sm:col-span-2">{{ form_row(form.coverFile) }}</div>
+    </div>
+{% endmacro %}

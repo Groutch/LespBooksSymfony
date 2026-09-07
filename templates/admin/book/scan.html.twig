@@ -1,0 +1,51 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Scanner un livre{% endblock %}
+
+{% block admin_content %}
+<div data-controller="barcode-scanner"
+     data-barcode-scanner-lookup-url-value="{{ path('admin_book_lookup', {isbn: '0000000000000'}) }}"
+     data-barcode-scanner-new-url-value="{{ path('admin_book_new') }}">
+
+    <h1 class="text-xl font-semibold">Scanner un livre</h1>
+    <p class="mt-1 text-sm text-slate-500">Visez le code-barres au dos de l'ouvrage.</p>
+
+    <div class="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+        <video data-barcode-scanner-target="video"
+               class="hidden w-full max-w-md rounded-lg bg-black aspect-video object-cover"
+               playsinline muted></video>
+
+        <p data-barcode-scanner-target="status" class="mt-3 text-sm text-slate-600">
+            La caméra nécessite une connexion sécurisée (HTTPS) et votre autorisation.
+        </p>
+
+        <div class="mt-4 flex flex-wrap gap-2">
+            <button type="button" data-action="barcode-scanner#start"
+                    class="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700">
+                Activer la caméra
+            </button>
+            <button type="button" data-action="barcode-scanner#stop"
+                    class="rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-700 hover:bg-slate-50">
+                Arrêter
+            </button>
+        </div>
+    </div>
+
+    <form class="mt-6 rounded-xl border border-slate-200 bg-white p-4"
+          data-action="barcode-scanner#submitManual">
+        <label for="manual-isbn" class="block text-sm font-medium text-slate-700">Ou saisir l'ISBN à la main</label>
+        <div class="mt-2 flex gap-2">
+            <input id="manual-isbn" type="text" inputmode="numeric" placeholder="978…"
+                   data-barcode-scanner-target="manual"
+                   class="flex-1 rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+            <button type="submit" class="rounded-lg bg-slate-800 px-4 py-2 font-medium text-white hover:bg-slate-900">
+                Rechercher
+            </button>
+        </div>
+    </form>
+
+    <p class="mt-4 text-sm">
+        <a href="{{ path('admin_book_new') }}" class="text-emerald-700 hover:underline">Ajouter un livre sans ISBN</a>
+    </p>
+</div>
+{% endblock %}

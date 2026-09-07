@@ -6,25 +6,10 @@ namespace App\Tests\Controller;
 
 use App\Entity\Book;
 use App\Entity\Category;
-use App\Entity\User;
-use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\KernelBrowser;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Tests\AdminWebTestCase;
 
-class BookAdminTest extends WebTestCase
+class BookAdminTest extends AdminWebTestCase
 {
-    private KernelBrowser $client;
-    private EntityManagerInterface $entityManager;
-
-    protected function setUp(): void
-    {
-        $this->client = static::createClient();
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
-
-        $this->purge();
-    }
-
     public function testAdminAreaRejectsAnonymousVisitors(): void
     {
         $this->client->request('GET', '/admin/livres');
@@ -114,33 +99,5 @@ class BookAdminTest extends WebTestCase
         $this->client->request('GET', '/admin/livres/recherche-isbn/9780306406158');
 
         self::assertResponseStatusCodeSame(422);
-    }
-
-    private function createAdmin(): User
-    {
-        $hasher = static::getContainer()->get(UserPasswordHasherInterface::class);
-
-        $user = (new User())
-            ->setEmail('admin@test.local')
-            ->setDisplayName('Admin')
-            ->setRoles([User::ROLE_ADMIN]);
-        $user->setPassword($hasher->hashPassword($user, 'motdepasse-de-test'));
-
-        $this->entityManager->persist($user);
-        $this->entityManager->flush();
-
-        return $user;
-    }
-
-    private function purge(): void
-    {
-        $connection = $this->entityManager->getConnection();
-        $connection->executeStatement('SET FOREIGN_KEY_CHECKS=0');
-
-        foreach (['book_category', 'book_author', 'book_image', 'loan', 'book', 'category', 'genre', 'author', 'app_user'] as $table) {
-            $connection->executeStatement('TRUNCATE TABLE '.$table);
-        }
-
-        $connection->executeStatement('SET FOREIGN_KEY_CHECKS=1');
     }
 }

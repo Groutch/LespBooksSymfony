@@ -1,5 +1,27 @@
 
 services:
+  # Reproduit l'hebergement OVH en local : Apache, docroot public/, .htaccess actif.
+  # Lancer avec : APP_UID=$(id -u) APP_GID=$(id -g) docker compose up -d --build
+  web:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      args:
+        UID: ${APP_UID:-1000}
+        GID: ${APP_GID:-1000}
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      APP_ENV: dev
+      DATABASE_URL: "mysql://${MYSQL_USER:-app}:${MYSQL_PASSWORD:-!ChangeMe!}@database:3306/${MYSQL_DATABASE:-app}?serverVersion=${MYSQL_VERSION:-8.0}&charset=utf8mb4"
+    ports:
+      - "${APP_PORT:-8000}:80"
+    volumes:
+      - .:/var/www/html:rw
+      # Cache isole : celui de l'hote contient des chemins absolus incompatibles.
+      - web_cache:/var/www/html/var/cache
+
 ###> doctrine/doctrine-bundle ###
   database:
     ports:
@@ -18,3 +40,6 @@ services:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
 ###< symfony/mailer ###
+
+volumes:
+  web_cache:

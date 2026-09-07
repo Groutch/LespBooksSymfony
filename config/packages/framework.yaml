@@ -1,0 +1,24 @@
+# see https://symfony.com/doc/current/reference/configuration/framework.html
+framework:
+    secret: '%env(APP_SECRET)%'
+
+    # Note that the session will be started ONLY if you read or write from it.
+    session: true
+
+    # Les API de métadonnées (Google Books surtout) renvoient par intermittence
+    # des 429/503 transitoires. Une seule nouvelle tentative suffit à les absorber
+    # sans allonger l'attente d'un scan au téléphone.
+    http_client:
+        default_options:
+            retry_failed:
+                max_retries: 1
+                delay: 250
+
+    #esi: true
+    #fragments: true
+
+when@test:
+    framework:
+        test: true
+        session:
+            storage_factory_id: session.storage.factory.mock_file

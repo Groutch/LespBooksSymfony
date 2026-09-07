@@ -1,0 +1,66 @@
+{
+    "app": {
+        "path": "\/assets\/app-TNXHCQF.js",
+        "type": "js"
+    },
+    "\/assets\/stimulus_bootstrap.js": {
+        "path": "\/assets\/stimulus_bootstrap-xCO4u8H.js",
+        "type": "js"
+    },
+    "\/assets\/@symfony\/stimulus-bundle\/controllers.js": {
+        "path": "\/assets\/@symfony\/stimulus-bundle\/controllers-ybGAUnG.js",
+        "type": "js"
+    },
+    "\/assets\/@symfony\/ux-turbo\/turbo_controller.js": {
+        "path": "\/assets\/@symfony\/ux-turbo\/turbo_controller-bFCo5ub.js",
+        "type": "js"
+    },
+    "\/assets\/@symfony\/ux-turbo\/mercure_stream_source_element.js": {
+        "path": "\/assets\/@symfony\/ux-turbo\/mercure_stream_source_element-XIjPTus.js",
+        "type": "js"
+    },
+    "\/assets\/controllers\/barcode_scanner_controller.js": {
+        "path": "\/assets\/controllers\/barcode_scanner_controller-1UkDl3O.js",
+        "type": "js"
+    },
+    "\/assets\/controllers\/hello_controller.js": {
+        "path": "\/assets\/controllers\/hello_controller-VYgvytJ.js",
+        "type": "js"
+    },
+    "\/assets\/controllers\/isbn_autofill_controller.js": {
+        "path": "\/assets\/controllers\/isbn_autofill_controller-A9A6vAG.js",
+        "type": "js"
+    },
+    "\/assets\/controllers\/csrf_protection_controller.js": {
+        "path": "\/assets\/controllers\/csrf_protection_controller-6ynUAeX.js",
+        "type": "js"
+    },
+    "\/assets\/styles\/app.css": {
+        "path": "\/assets\/styles\/app-4Pnl0h2.css",
+        "type": "css"
+    },
+    "@hotwired\/stimulus": {
+        "path": "\/assets\/vendor\/@hotwired\/stimulus\/stimulus.index-ryewcoo.js",
+        "type": "js"
+    },
+    "@symfony\/stimulus-bundle": {
+        "path": "\/assets\/@symfony\/stimulus-bundle\/loader-IOzBDLu.js",
+        "type": "js"
+    },
+    "@hotwired\/turbo": {
+        "path": "\/assets\/vendor\/@hotwired\/turbo\/turbo.index-J4AkTcK.js",
+        "type": "js"
+    },
+    "@zxing\/browser": {
+        "path": "\/assets\/vendor\/@zxing\/browser\/browser.index-cW2uyj_.js",
+        "type": "js"
+    },
+    "@zxing\/library": {
+        "path": "\/assets\/vendor\/@zxing\/library\/library.index-41qFsVz.js",
+        "type": "js"
+    },
+    "ts-custom-error": {
+        "path": "\/assets\/vendor\/ts-custom-error\/ts-custom-error.index-CmApdts.js",
+        "type": "js"
+    }
+}

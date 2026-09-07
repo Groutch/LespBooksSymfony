@@ -1,0 +1,25 @@
+<article class="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:border-slate-300 hover:shadow-md">
+    <a href="{{ path('catalog_book', {id: book.id}) }}" class="relative block">
+        {% if book.primaryImage and book.primaryImage.imageName %}
+            <img src="{{ vich_uploader_asset(book.primaryImage, 'imageFile') }}" alt="Couverture de {{ book.title }}"
+                 class="aspect-[2/3] w-full bg-slate-100 object-cover" loading="lazy">
+        {% else %}
+            <div class="flex aspect-[2/3] w-full items-center justify-center bg-slate-100 p-3 text-center text-sm text-slate-400">
+                {{ book.title }}
+            </div>
+        {% endif %}
+
+        {% if not book.available %}
+            <span class="absolute left-2 top-2 rounded bg-amber-500 px-2 py-0.5 text-xs font-medium text-white">Emprunté</span>
+        {% endif %}
+    </a>
+
+    <div class="flex flex-1 flex-col p-3">
+        <a href="{{ path('catalog_book', {id: book.id}) }}"
+           class="line-clamp-2 font-medium leading-snug group-hover:text-emerald-700">{{ book.title }}</a>
+        <p class="mt-1 line-clamp-1 text-sm text-slate-500">{{ book.authorNames|default('Auteur inconnu') }}</p>
+        {% if book.publishedYear %}
+            <p class="mt-auto pt-2 text-xs text-slate-400">{{ book.publishedYear }}</p>
+        {% endif %}
+    </div>
+</article>

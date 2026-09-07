@@ -1,0 +1,31 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Prêter « {{ book.title }} »{% endblock %}
+
+{% block admin_content %}
+<div class="flex items-center justify-between gap-4">
+    <h1 class="text-xl font-semibold">Prêter « {{ book.title }} »</h1>
+    <a href="{{ path('admin_loan_index') }}" class="text-sm text-slate-600 hover:text-slate-900">Retour aux prêts</a>
+</div>
+
+<p class="mt-1 text-sm text-slate-500">{{ book.authorNames|default('Auteur inconnu') }}</p>
+
+{{ form_start(form, {attr: {class: 'mt-5 rounded-xl border border-slate-200 bg-white p-4'}}) }}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {{ form_row(form.borrowerFirstName) }}
+        {{ form_row(form.borrowerLastName) }}
+        {{ form_row(form.borrowedAt) }}
+        {{ form_row(form.dueAt) }}
+        <div class="sm:col-span-2">{{ form_row(form.notes) }}</div>
+    </div>
+
+    <div class="mt-5 flex flex-wrap gap-2">
+        <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700">
+            Enregistrer le prêt
+        </button>
+        <a href="{{ path('admin_book_index') }}" class="rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-700 hover:bg-slate-50">
+            Annuler
+        </a>
+    </div>
+{{ form_end(form) }}
+{% endblock %}

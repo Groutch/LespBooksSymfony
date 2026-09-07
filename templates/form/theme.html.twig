@@ -1,0 +1,44 @@
+{% use 'form_div_layout.html.twig' %}
+
+{#- Habille les formulaires Symfony aux couleurs du site : sans ce theme, les
+    champs sont rendus sans classes et les libelles se collent aux widgets. -#}
+
+{%- block form_row -%}
+    {%- set row_attr = row_attr|merge({class: row_attr.class|default('mb-4')}) -%}
+    {{- parent() -}}
+{%- endblock form_row -%}
+
+{%- block form_label -%}
+    {%- set label_attr = label_attr|merge({class: label_attr.class|default('block text-sm font-medium text-slate-700')}) -%}
+    {{- parent() -}}
+{%- endblock form_label -%}
+
+{%- block widget_attributes -%}
+    {%- set attr = attr|merge({class: attr.class|default('mt-1 w-full rounded-lg border px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500') ~ (errors|length ? ' border-red-400' : ' border-slate-300')}) -%}
+    {{- parent() -}}
+{%- endblock widget_attributes -%}
+
+{%- block textarea_widget -%}
+    {%- set attr = attr|merge({rows: attr.rows|default(4)}) -%}
+    {{- parent() -}}
+{%- endblock textarea_widget -%}
+
+{%- block checkbox_widget -%}
+    {%- set attr = attr|merge({class: attr.class|default('rounded border-slate-300 text-emerald-600 focus:ring-emerald-500')}) -%}
+    {{- parent() -}}
+{%- endblock checkbox_widget -%}
+
+{%- block form_help -%}
+    {%- set help_attr = help_attr|merge({class: help_attr.class|default('mt-1 text-xs text-slate-500')}) -%}
+    {{- parent() -}}
+{%- endblock form_help -%}
+
+{%- block form_errors -%}
+    {%- if errors|length > 0 -%}
+        <ul class="mt-1 space-y-0.5">
+            {%- for error in errors -%}
+                <li class="text-sm text-red-700" id="{{ id ~ '_error' ~ loop.index }}">{{ error.message }}</li>
+            {%- endfor -%}
+        </ul>
+    {%- endif -%}
+{%- endblock form_errors -%}

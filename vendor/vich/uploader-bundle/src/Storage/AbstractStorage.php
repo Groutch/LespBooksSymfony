@@ -1,0 +1,166 @@
+<?php
+
+namespace Vich\UploaderBundle\Storage;
+
+use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Vich\UploaderBundle\Exception\MappingNotFoundException;
+use Vich\UploaderBundle\Exception\NotUploadableException;
+use Vich\UploaderBundle\FileAbstraction\ReplacingFile;
+use Vich\UploaderBundle\Mapping\PropertyMappingFactoryInterface;
+use Vich\UploaderBundle\Mapping\PropertyMappingInterface;
+
+/**
+ * FileSystemStorage.
+ *
+ * @author Dustin Dobervich <ddobervich@gmail.com>
+ */
+abstract class AbstractStorage implements StorageInterface
+{
+    private const URI_SEPARATOR = '/';
+
+    public function __construct(protected readonly PropertyMappingFactoryInterface $factory)
+    {
+    }
+
+    /**
+     * @return mixed|void
+     */
+    abstract protected function doUpload(PropertyMappingInterface $mapping, File $file, ?string $dir, string $name);
+
+    public function upload(object $obj, PropertyMappingInterface $mapping): void
+    {
+        $file = $mapping->getFile($obj);
+        if (!$file instanceof UploadedFile && !$file instanceof ReplacingFile) {
+            throw new \LogicException('No uploadable file found');
+        }
+
+        $name = $mapping->getUploadName($obj);
+        $mapping->setFileName($obj, $name);
+        $mimeType = $file->getMimeType();
+
+        $mapping->writeProperty($obj, 'size', $file->getSize());
+        $mapping->writeProperty($obj, 'mimeType', $mimeType);
+        $mapping->writeProperty($obj, 'originalName', $file->getClientOriginalName());
+
+        if (null !== $mimeType && \str_contains($mimeType, 'image/') && 'image/svg+xml' !== $mimeType && false !== $dimensions = @\getimagesize($file)) {
+            $mapping->writeProperty($obj, 'dimensions', \array_splice($dimensions, 0, 2));
+        }
+
+        $dir = $mapping->getUploadDir($obj);
+
+        try {
+            $this->doUpload($mapping, $file, $dir, $name);
+        } catch (\Exception $e) {
+            if ($file instanceof ReplacingFile
+                && $file->isRemoveReplacedFileOnError()
+            ) {
+                \unlink($file->getPathname());
+            }
+
+            throw $e;
+        }
+
+        if ($file instanceof ReplacingFile
+            && $file->isRemoveReplacedFile()
+        ) {
+            \unlink($file->getPathname());
+        }
+    }
+
+    abstract protected function doRemove(PropertyMappingInterface $mapping, ?string $dir, string $name): ?bool;
+
+    public function remove(object $obj, PropertyMappingInterface $mapping, ?string $dir = null): ?bool
+    {
+        $name = $mapping->getFileName($obj);
+
+        if (empty($name)) {
+            return false;
+        }
+
+        // If $dir is provided explicitly, use it directly (bypasses getUploadDir and DirectoryNamer)
+        // This is useful for cleanup operations where the entity no longer exists in the database
+        if (null !== $dir) {
+            return $this->doRemove($mapping, $dir, $name);
+        }
+
+        // Default behavior: calculate directory from object using DirectoryNamer if configured
+        return $this->doRemove($mapping, $mapping->getUploadDir($obj), $name);
+    }
+
+    /**
+     * Do resolve path.
+     *
+     * @param PropertyMappingInterface $mapping  The mapping representing the field
+     * @param string|null              $dir      The directory in which the file is uploaded
+     * @param string                   $name     The file name
+     * @param bool                     $relative Whether the path should be relative or absolute
+     */
+    abstract protected function doResolvePath(PropertyMappingInterface $mapping, ?string $dir, string $name, ?bool $relative = false): string;
+
+    public function resolvePath(object|array $obj, ?string $fieldName = null, ?string $className = null, ?bool $relative = false): ?string
+    {
+        [$mapping, $filename] = $this->getFilename($obj, $fieldName, $className);
+
+        if (empty($filename)) {
+            return null;
+        }
+
+        return $this->doResolvePath($mapping, $mapping->getUploadDir($obj), $filename, $relative);
+    }
+
+    public function resolveUri(object|array $obj, ?string $fieldName = null, ?string $className = null): ?string
+    {
+        [$mapping, $filename] = $this->getFilename($obj, $fieldName, $className);
+
+        if (empty($filename)) {
+            return null;
+        }
+
+        $dir = $mapping->getUploadDir($obj);
+        $dir = \is_string($dir) ? \trim($dir, self::URI_SEPARATOR) : $dir;
+        $path = (\is_string($dir) && '' !== $dir) ? $dir.self::URI_SEPARATOR.$filename : $filename;
+
+        return \rtrim($mapping->getUriPrefix(), self::URI_SEPARATOR).self::URI_SEPARATOR.$path;
+    }
+
+    public function resolveStream(object|array $obj, ?string $fieldName = null, ?string $className = null)
+    {
+        $path = $this->resolvePath($obj, $fieldName, $className);
+
+        if (empty($path) || !\is_file($path)) {
+            return null;
+        }
+
+        $stream = \fopen($path, 'rb');
+
+        if (false === $stream) {
+            return null;
+        }
+
+        return $stream;
+    }
+
+    /**
+     * note: extension point.
+     *
+     * @return array{0: PropertyMappingInterface, 1: string}
+     *
+     * @throws MappingNotFoundException
+     * @throws NotUploadableException
+     * @throws \RuntimeException
+     */
+    protected function getFilename(object|array $obj, ?string $fieldName = null, ?string $className = null): array
+    {
+        $mapping = null === $fieldName ?
+            $this->factory->fromFirstField($obj, $className) :
+            $this->factory->fromField($obj, $fieldName, $className)
+        ;
+
+        if (null === $mapping) {
+            throw new MappingNotFoundException(\sprintf('Mapping not found for field "%s"', $fieldName));
+        }
+
+        return [$mapping, $mapping->getFileName($obj)];
+    }
+}

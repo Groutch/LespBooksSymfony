@@ -1,0 +1,51 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Tableau de bord{% endblock %}
+
+{% block admin_content %}
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white rounded-xl border border-slate-200 p-4">
+                <p class="text-sm text-slate-500">Livres</p>
+                <p class="mt-1 text-2xl font-semibold">{{ bookCount }}</p>
+                <a href="{{ path('admin_book_index') }}" class="text-sm text-emerald-700 hover:underline">Gérer les livres</a>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-200 p-4">
+                <p class="text-sm text-slate-500">Catégories</p>
+                <p class="mt-1 text-2xl font-semibold">{{ categoryCount }}</p>
+                <a href="{{ path('admin_category_index') }}" class="text-sm text-emerald-700 hover:underline">Gérer les catégories</a>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-200 p-4">
+                <p class="text-sm text-slate-500">Prêts en cours</p>
+                <p class="mt-1 text-2xl font-semibold">{{ activeLoanCount }}</p>
+                <a href="{{ path('admin_loan_index') }}" class="text-sm text-emerald-700 hover:underline">Gérer les prêts</a>
+            </div>
+        </div>
+
+        {% if overdueLoans is not empty %}
+            <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <h2 class="font-medium text-amber-900">Prêts en retard</h2>
+                <ul class="mt-2 space-y-1 text-sm text-amber-800">
+                    {% for loan in overdueLoans %}
+                        <li>{{ loan.book.title }} — {{ loan.borrowerName }} (échéance {{ loan.dueAt|date('d/m/Y') }})</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <h2 class="mt-8 text-lg font-medium">Derniers livres ajoutés</h2>
+        {% if latestBooks is empty %}
+            <p class="mt-2 text-slate-500">
+                Aucun livre pour l'instant.
+                <a href="{{ path('admin_book_scan') }}" class="text-emerald-700 hover:underline">Scannez le premier</a>.
+            </p>
+        {% else %}
+            <ul class="mt-3 divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+                {% for book in latestBooks %}
+                    <li class="px-4 py-3">
+                        <p class="font-medium">{{ book.title }}</p>
+                        <p class="text-sm text-slate-500">{{ book.authorNames|default('Auteur inconnu') }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+{% endblock %}

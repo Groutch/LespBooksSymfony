@@ -1,0 +1,112 @@
+<?php
+
+namespace Vich\UploaderBundle\Storage;
+
+use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Vich\UploaderBundle\Mapping\PropertyMappingInterface;
+
+/**
+ * FileSystemStorage.
+ *
+ * @author Dustin Dobervich <ddobervich@gmail.com>
+ */
+final class FileSystemStorage extends AbstractStorage
+{
+    private const URI_SEPARATOR = '/';
+
+    protected function doUpload(PropertyMappingInterface $mapping, File $file, ?string $dir, string $name): ?File
+    {
+        $uploadDir = $mapping->getUploadDestination().\DIRECTORY_SEPARATOR.$dir;
+
+        if (!\file_exists($uploadDir) && !@\mkdir($uploadDir, recursive: true) && !\is_dir($uploadDir)) {
+            throw new \Exception('Could not create directory "'.$uploadDir.'"');
+        }
+        if (!\is_dir($uploadDir)) {
+            throw new \Exception('Tried to move file to directory "'.$uploadDir.'" but it is a file');
+        }
+
+        if ($file instanceof UploadedFile) {
+            return $file->move($uploadDir, $name);
+        }
+        $targetPathname = $uploadDir.\DIRECTORY_SEPARATOR.$name;
+        if (!\copy($file->getPathname(), $targetPathname)) {
+            throw new \RuntimeException('Could not copy file');
+        }
+
+        return new File($targetPathname);
+    }
+
+    protected function doRemove(PropertyMappingInterface $mapping, ?string $dir, string $name): ?bool
+    {
+        $file = $this->doResolvePath($mapping, $dir, $name);
+
+        if (!\file_exists($file) || !\unlink($file)) {
+            throw new \Exception('Cannot remove file '.$file);
+        }
+
+        return true;
+    }
+
+    protected function doResolvePath(
+        PropertyMappingInterface $mapping,
+        ?string $dir,
+        string $name,
+        ?bool $relative = false
+    ): string {
+        $path = (\is_string($dir) && '' !== $dir) ? $dir.\DIRECTORY_SEPARATOR.$name : $name;
+
+        if ($relative) {
+            return $path;
+        }
+
+        return $mapping->getUploadDestination().\DIRECTORY_SEPARATOR.$path;
+    }
+
+    public function resolveUri(object|array $obj, ?string $fieldName = null, ?string $className = null): ?string
+    {
+        [$mapping, $name] = $this->getFilename($obj, $fieldName, $className);
+
+        if (empty($name)) {
+            return null;
+        }
+
+        $uploadDir = \trim($this->convertWindowsDirectorySeparator($mapping->getUploadDir($obj) ?? ''), self::URI_SEPARATOR);
+        $uploadDir = ('' !== $uploadDir) ? $uploadDir.self::URI_SEPARATOR : '';
+
+        return \rtrim($mapping->getUriPrefix(), self::URI_SEPARATOR).self::URI_SEPARATOR.$uploadDir.$name;
+    }
+
+    private function convertWindowsDirectorySeparator(string $string): string
+    {
+        return \str_replace('\\', '/', $string);
+    }
+
+    public function listFiles(PropertyMappingInterface $mapping): iterable
+    {
+        $uploadDestination = $mapping->getUploadDestination();
+
+        if (!\is_dir($uploadDestination)) {
+            return;
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($uploadDestination, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::LEAVES_ONLY
+        );
+
+        foreach ($iterator as $file) {
+            if ($file->isFile()) {
+                // Return path relative to upload destination
+                $relativePath = \substr($file->getPathname(), \strlen($uploadDestination) + 1);
+                $relativePath = $this->convertWindowsDirectorySeparator($relativePath);
+
+                // Get file modification time
+                $mtime = @\filemtime($file->getPathname());
+                $lastModifiedAt = false !== $mtime ? (int) $mtime : null;
+
+                yield new StoredFile($relativePath, $lastModifiedAt);
+            }
+        }
+    }
+}

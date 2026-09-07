@@ -1,0 +1,83 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block public_content %}
+<a href="{{ path('catalog_index') }}" class="text-sm text-slate-600 hover:text-slate-900">← Retour à la recherche</a>
+
+<div class="mt-4 grid grid-cols-1 sm:grid-cols-[220px_1fr] gap-6 rounded-xl border border-slate-200 bg-white p-5">
+    <div>
+        {% if book.primaryImage and book.primaryImage.imageName %}
+            <img src="{{ vich_uploader_asset(book.primaryImage, 'imageFile') }}" alt="Couverture de {{ book.title }}"
+                 class="aspect-[2/3] w-full rounded-lg border border-slate-200 object-cover">
+        {% else %}
+            <div class="flex aspect-[2/3] w-full items-center justify-center rounded-lg bg-slate-100 p-3 text-center text-sm text-slate-400">
+                {{ book.title }}
+            </div>
+        {% endif %}
+
+        {% if book.available %}
+            <p class="mt-3 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-800">
+                Disponible{% if book.shelfLocation %} · rayon {{ book.shelfLocation }}{% endif %}
+            </p>
+        {% else %}
+            {# Aucun nom d'emprunteur ici : le site est public. #}
+            <p class="mt-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
+                Emprunté
+                {%- if book.activeLoan.dueAt %}, retour prévu le {{ book.activeLoan.dueAt|date('d/m/Y') }}{% endif %}
+            </p>
+        {% endif %}
+    </div>
+
+    <div>
+        <h1 class="text-2xl font-semibold leading-tight">{{ book.title }}</h1>
+        {% if book.subtitle %}
+            <p class="mt-1 text-lg text-slate-600">{{ book.subtitle }}</p>
+        {% endif %}
+
+        {% if book.authors is not empty %}
+            <p class="mt-3 flex flex-wrap gap-2">
+                {% for author in book.authors %}
+                    <a href="{{ path('catalog_index', {auteur: author.slug}) }}"
+                       class="rounded-full bg-white border border-slate-200 px-3 py-1 text-sm hover:bg-slate-50">{{ author.name }}</a>
+                {% endfor %}
+            </p>
+        {% endif %}
+
+        {% if book.categories is not empty or book.genre %}
+            <p class="mt-2 flex flex-wrap gap-2">
+                {% if book.genre %}
+                    <a href="{{ path('catalog_index', {genre: book.genre.slug}) }}"
+                       class="rounded-full bg-slate-100 px-3 py-1 text-sm hover:bg-slate-200">{{ book.genre.name }}</a>
+                {% endif %}
+                {% for category in book.categories %}
+                    <a href="{{ path('catalog_index', {categorie: category.slug}) }}"
+                       class="rounded-full bg-slate-100 px-3 py-1 text-sm hover:bg-slate-200">{{ category.name }}</a>
+                {% endfor %}
+            </p>
+        {% endif %}
+
+        {% if book.description %}
+            <p class="mt-4 whitespace-pre-line text-slate-700">{{ book.description }}</p>
+        {% endif %}
+
+        <dl class="mt-6 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+            {% if book.publisher %}
+                <div><dt class="text-slate-500">Éditeur</dt><dd>{{ book.publisher }}</dd></div>
+            {% endif %}
+            {% if book.publishedYear %}
+                <div><dt class="text-slate-500">Année</dt><dd>{{ book.publishedYear }}</dd></div>
+            {% endif %}
+            {% if book.pageCount %}
+                <div><dt class="text-slate-500">Pages</dt><dd>{{ book.pageCount }}</dd></div>
+            {% endif %}
+            {% if book.language %}
+                <div><dt class="text-slate-500">Langue</dt><dd>{{ book.language }}</dd></div>
+            {% endif %}
+            {% if book.isbn13 %}
+                <div><dt class="text-slate-500">ISBN</dt><dd>{{ book.isbn13 }}</dd></div>
+            {% endif %}
+        </dl>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Catégories{% endblock %}
+
+{% block admin_content %}
+<div class="flex items-center justify-between gap-4">
+    <h1 class="text-xl font-semibold">Catégories <span class="text-slate-400 font-normal">({{ rows|length }})</span></h1>
+    <a href="{{ path('admin_category_new') }}" class="text-sm text-emerald-700 hover:underline">Nouvelle catégorie</a>
+</div>
+
+{% if duplicates is not empty %}
+    <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <h2 class="font-medium text-amber-900">Doublons possibles</h2>
+        <p class="mt-1 text-sm text-amber-800">
+            Fusionner conserve tous les livres : ils sont rattachés à la catégorie gardée.
+        </p>
+        <ul class="mt-3 space-y-2">
+            {% for pair in duplicates %}
+                <li class="flex flex-wrap items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm">
+                    <span class="font-medium">{{ pair.first.name }}</span>
+                    <span class="text-slate-400">↔</span>
+                    <span class="font-medium">{{ pair.second.name }}</span>
+                    <span class="text-xs text-slate-500">{{ (pair.score * 100)|round }} %</span>
+
+                    <span class="ml-auto flex flex-wrap gap-2">
+                        <form method="post" action="{{ path('admin_category_merge') }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('fusionner-categories') }}">
+                            <input type="hidden" name="source" value="{{ pair.second.id }}">
+                            <input type="hidden" name="target" value="{{ pair.first.id }}">
+                            <button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 hover:bg-slate-50">
+                                Garder « {{ pair.first.name }} »
+                            </button>
+                        </form>
+                        <form method="post" action="{{ path('admin_category_merge') }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('fusionner-categories') }}">
+                            <input type="hidden" name="source" value="{{ pair.first.id }}">
+                            <input type="hidden" name="target" value="{{ pair.second.id }}">
+                            <button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 hover:bg-slate-50">
+                                Garder « {{ pair.second.name }} »
+                            </button>
+                        </form>
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+{% if rows is empty %}
+    <p class="mt-6 rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
+        Aucune catégorie. Elles se créent aussi toutes seules au fil des scans.
+    </p>
+{% else %}
+    <ul class="mt-4 divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+        {% for row in rows %}
+            <li class="flex items-center gap-3 px-4 py-3">
+                <div class="min-w-0 flex-1">
+                    <p class="truncate font-medium">{{ row.category.name }}</p>
+                    <p class="text-sm text-slate-500">
+                        {{ row.bookCount }} livre{{ row.bookCount > 1 ? 's' }}
+                        {% if row.category.shelfCode %} · rayon {{ row.category.shelfCode }}{% endif %}
+                    </p>
+                </div>
+                <a href="{{ path('admin_category_edit', {id: row.category.id}) }}"
+                   class="shrink-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50">Modifier</a>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+{% endblock %}

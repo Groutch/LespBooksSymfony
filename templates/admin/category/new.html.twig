@@ -1,0 +1,42 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Nouvelle catégorie{% endblock %}
+
+{% block admin_content %}
+<div class="flex items-center justify-between gap-4">
+    <h1 class="text-xl font-semibold">Nouvelle catégorie</h1>
+    <a href="{{ path('admin_category_index') }}" class="text-sm text-slate-600 hover:text-slate-900">Retour à la liste</a>
+</div>
+
+{{ form_start(form, {attr: {class: 'mt-5 rounded-xl border border-slate-200 bg-white p-4'}}) }}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {{ form_row(form.name) }}
+        {{ form_row(form.shelfCode) }}
+        <div class="sm:col-span-2">{{ form_row(form.description) }}</div>
+    </div>
+
+    {% if suggestions is not empty %}
+        <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">
+            <p class="font-medium text-amber-900">Ces catégories existent déjà :</p>
+            <ul class="mt-1 space-y-1 text-amber-800">
+                {% for suggestion in suggestions %}
+                    <li>
+                        <a href="{{ path('admin_category_edit', {id: suggestion.category.id}) }}" class="underline">{{ suggestion.category.name }}</a>
+                        <span class="text-xs">({{ (suggestion.score * 100)|round }} %)</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="mt-5 flex flex-wrap gap-2">
+        <button type="submit" {% if suggestions is not empty %}name="confirm" value="1"{% endif %}
+                class="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700">
+            {{ suggestions is empty ? 'Créer' : 'Créer quand même' }}
+        </button>
+        <a href="{{ path('admin_category_index') }}" class="rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-700 hover:bg-slate-50">
+            Annuler
+        </a>
+    </div>
+{{ form_end(form) }}
+{% endblock %}

@@ -13,7 +13,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
-#[UniqueEntity(fields: ['slug'], message: 'Une catégorie porte déjà ce nom.')]
+#[UniqueEntity(fields: ['slug'], message: 'Une catégorie porte déjà ce nom.', errorPath: 'name')]
 class Category
 {
     #[ORM\Id]

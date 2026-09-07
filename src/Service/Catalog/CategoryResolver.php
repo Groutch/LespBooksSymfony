@@ -120,6 +120,32 @@ class CategoryResolver
     }
 
     /**
+     * Paires de catégories jugées équivalentes, proposées à la fusion dans
+     * l'écran d'administration. Chaque paire n'apparaît qu'une fois.
+     *
+     * @return array<int, array{first: Category, second: Category, score: float}>
+     */
+    public function findDuplicatePairs(int $limit = 20): array
+    {
+        $categories = $this->repository->findAllOrdered();
+        $pairs = [];
+
+        foreach ($categories as $i => $first) {
+            foreach (\array_slice($categories, $i + 1) as $second) {
+                $score = $this->normalizer->similarity($first->getName(), $second->getName());
+
+                if ($score >= $this->similarityThreshold) {
+                    $pairs[] = ['first' => $first, 'second' => $second, 'score' => $score];
+                }
+            }
+        }
+
+        usort($pairs, static fn (array $a, array $b): int => $b['score'] <=> $a['score']);
+
+        return \array_slice($pairs, 0, $limit);
+    }
+
+    /**
      * @param array<int, string> $names
      *
      * @return array<int, Category>

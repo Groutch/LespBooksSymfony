@@ -89,7 +89,9 @@ class BnfProvider extends AbstractMetadataProvider
             publishedYear: $this->year($this->first($record, 'date')),
             language: $this->language($this->first($record, 'language')),
             description: $this->first($record, 'description'),
-            categories: $this->all($record, 'subject'),
+            // Les vedettes matiere de la BnF ("Roman anglais -- 20e siecle") relevent
+            // de la catalographie, pas du rangement : seules celles de Google Books
+            // sont retenues.
             isbn13: $isbn13,
             sources: [$this->getName()],
         );

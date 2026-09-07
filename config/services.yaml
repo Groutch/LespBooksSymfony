@@ -11,6 +11,8 @@ parameters:
     # categorie existante au lieu d'en creer une nouvelle (0 = tout fusionner, 1 = exact).
     app.category_similarity_threshold: 0.85
     app.google_books_api_key: '%env(GOOGLE_BOOKS_API_KEY)%'
+    # Echeance proposee a la creation d'un pret et pas d'une prolongation.
+    app.default_loan_days: 28
 
 services:
     # default configuration for services in *this* file

@@ -47,6 +47,21 @@ class LoanRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return array<int, Loan>
+     */
+    public function findReturned(int $limit): array
+    {
+        return $this->createQueryBuilder('l')
+            ->leftJoin('l.book', 'b')->addSelect('b')
+            ->andWhere('l.returnedAt IS NOT NULL')
+            ->orderBy('l.returnedAt', 'DESC')
+            ->addOrderBy('l.id', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
     public function countActive(): int
     {
         return (int) $this->createQueryBuilder('l')

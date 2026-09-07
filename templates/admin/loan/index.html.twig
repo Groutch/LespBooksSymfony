@@ -1,0 +1,71 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Prêts{% endblock %}
+
+{% block admin_content %}
+<div class="flex items-center justify-between gap-4">
+    <h1 class="text-xl font-semibold">Prêts en cours <span class="text-slate-400 font-normal">({{ activeLoans|length }})</span></h1>
+    <a href="{{ path('admin_book_index') }}" class="text-sm text-emerald-700 hover:underline">Prêter un livre</a>
+</div>
+
+{% if activeLoans is empty %}
+    <p class="mt-6 rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
+        Aucun prêt en cours. Depuis la <a href="{{ path('admin_book_index') }}" class="text-emerald-700 hover:underline">liste des livres</a>,
+        utilisez le bouton « Prêter ».
+    </p>
+{% else %}
+    <ul class="mt-4 space-y-3">
+        {% for loan in activeLoans %}
+            <li class="rounded-xl border bg-white p-4 {{ loan.overdue ? 'border-amber-300' : 'border-slate-200' }}">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="font-medium">{{ loan.book.title }}</p>
+                        <p class="text-sm text-slate-500">
+                            Prêté à {{ loan.borrowerName }} le {{ loan.borrowedAt|date('d/m/Y') }}
+                        </p>
+                        <p class="mt-1 text-sm {{ loan.overdue ? 'text-amber-800 font-medium' : 'text-slate-500' }}">
+                            {% if loan.dueAt %}
+                                Retour prévu le {{ loan.dueAt|date('d/m/Y') }}{% if loan.overdue %} — en retard{% endif %}
+                            {% else %}
+                                Sans échéance
+                            {% endif %}
+                        </p>
+                        {% if loan.notes %}
+                            <p class="mt-1 text-sm text-slate-500 italic">{{ loan.notes }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex shrink-0 flex-wrap items-center gap-2">
+                        <form method="post" action="{{ path('admin_loan_extend', {id: loan.id}) }}" class="flex items-center gap-2">
+                            <input type="hidden" name="_token" value="{{ csrf_token('prolonger-pret-' ~ loan.id) }}">
+                            <input type="date" name="dueAt"
+                                   value="{{ (loan.dueAt ?? date())|date_modify('+' ~ defaultLoanDays ~ ' days')|date('Y-m-d') }}"
+                                   class="rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                            <button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50">Prolonger</button>
+                        </form>
+
+                        <form method="post" action="{{ path('admin_loan_return', {id: loan.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('rendre-pret-' ~ loan.id) }}">
+                            <button type="submit" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700">Rendre</button>
+                        </form>
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% if returnedLoans is not empty %}
+    <h2 class="mt-8 text-lg font-medium">Derniers retours</h2>
+    <ul class="mt-3 divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+        {% for loan in returnedLoans %}
+            <li class="px-4 py-3">
+                <p class="font-medium">{{ loan.book.title }}</p>
+                <p class="text-sm text-slate-500">
+                    {{ loan.borrowerName }} — rendu le {{ loan.returnedAt|date('d/m/Y') }}
+                </p>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+{% endblock %}

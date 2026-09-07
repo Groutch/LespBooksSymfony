@@ -42,8 +42,19 @@
                     {% endif %}
                 </div>
 
-                <a href="{{ path('admin_book_edit', {id: book.id}) }}"
-                   class="shrink-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50">Modifier</a>
+                <div class="flex shrink-0 items-center gap-2">
+                    {% if book.available %}
+                        <a href="{{ path('admin_loan_new', {id: book.id}) }}"
+                           class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50">Prêter</a>
+                    {% else %}
+                        <form method="post" action="{{ path('admin_loan_return', {id: book.activeLoan.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('rendre-pret-' ~ book.activeLoan.id) }}">
+                            <button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50">Rendre</button>
+                        </form>
+                    {% endif %}
+                    <a href="{{ path('admin_book_edit', {id: book.id}) }}"
+                       class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50">Modifier</a>
+                </div>
             </li>
         {% endfor %}
     </ul>

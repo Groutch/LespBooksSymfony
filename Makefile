@@ -6,7 +6,7 @@ DC := APP_UID=$(shell id -u) APP_GID=$(shell id -g) docker compose
 EXEC := $(DC) exec -u www-data web
 
 .DEFAULT_GOAL := help
-.PHONY: help up stop down restart logs shell cc assets test lint migrate
+.PHONY: help up stop down restart logs shell cc assets test lint migrate deploy
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-8s\033[0m %s\n", $$1, $$2}'
@@ -49,3 +49,6 @@ lint: ## Verifie gabarits, conteneur et schema
 migrate: ## Applique les migrations sur app et app_test
 	php bin/console doctrine:migrations:migrate --no-interaction
 	php bin/console doctrine:migrations:migrate --no-interaction --env=test
+
+deploy: ## Construit la branche deploy livree a OVH (make deploy PUSH=1 pour l'envoyer)
+	./deploy/build.sh $(if $(PUSH),--push,)

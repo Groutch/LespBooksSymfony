@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Service\Catalog;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Vich\UploaderBundle\FileAbstraction\ReplacingFile;
 
 /**
  * Récupère la couverture proposée par une source externe.
@@ -40,7 +40,11 @@ class CoverDownloader
     ) {
     }
 
-    public function download(string $url, string $reference): ?File
+    /**
+     * Un `File` nu serait ignoré en silence par VichUploader : seul un
+     * ReplacingFile déclenche la prise en charge d'un fichier déjà sur disque.
+     */
+    public function download(string $url, string $reference): ?ReplacingFile
     {
         if (!$this->isAllowed($url)) {
             $this->logger->warning('Couverture refusée (hôte non autorisé) : {url}', ['url' => $url]);
@@ -85,7 +89,7 @@ class CoverDownloader
             return null;
         }
 
-        return new File($path);
+        return new ReplacingFile($path, removeReplacedFile: true);
     }
 
     private function isAllowed(string $url): bool

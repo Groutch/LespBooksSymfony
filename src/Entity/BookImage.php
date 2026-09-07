@@ -9,7 +9,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Validator\Constraints as Assert;
-use Vich\UploaderBundle\Mapping\Annotation as Vich;
+use Vich\UploaderBundle\Mapping\Attribute as Vich;
 
 #[ORM\Entity(repositoryClass: BookImageRepository::class)]
 #[Vich\Uploadable]
@@ -32,8 +32,10 @@ class BookImage
 
     /**
      * Une seule image principale par livre, garantie par BookImageManager.
+     * La colonne ne peut pas s'appeler « primary » : mot réservé MySQL que
+     * Doctrine n'échappe pas dans les INSERT.
      */
-    #[ORM\Column]
+    #[ORM\Column(name: 'is_primary')]
     private bool $primary = false;
 
     #[ORM\Column]

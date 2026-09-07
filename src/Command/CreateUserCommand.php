@@ -67,6 +67,14 @@ class CreateUserCommand extends Command
             return Command::FAILURE;
         }
 
+        // La saisie est masquee : sans confirmation, une faute de frappe ecraserait
+        // silencieusement le mot de passe d'un compte existant.
+        if ($password !== $io->askHidden('Confirmez le mot de passe')) {
+            $io->error('Les deux saisies ne correspondent pas, rien n\'a été modifié.');
+
+            return Command::FAILURE;
+        }
+
         $user = $this->userRepository->findOneBy(['email' => $email]);
         $isNew = null === $user;
 

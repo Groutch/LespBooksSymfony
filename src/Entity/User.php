@@ -126,6 +126,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->createdAt;
     }
 
+    #[\Deprecated]
     public function eraseCredentials(): void
     {
     }

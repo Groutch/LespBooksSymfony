@@ -12,7 +12,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: GenreRepository::class)]
-#[UniqueEntity(fields: ['slug'])]
+#[UniqueEntity(fields: ['slug'], message: 'Un rayon porte déjà ce nom.', errorPath: 'name')]
 class Genre
 {
     #[ORM\Id]

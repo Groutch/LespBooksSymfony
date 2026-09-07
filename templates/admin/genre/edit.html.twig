@@ -1,0 +1,31 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Rayon « {{ genre.name }} »{% endblock %}
+
+{% block admin_content %}
+<div class="flex items-center justify-between gap-4">
+    <h1 class="text-xl font-semibold">Rayon « {{ genre.name }} »</h1>
+    <a href="{{ path('admin_genre_index') }}" class="text-sm text-slate-600 hover:text-slate-900">Retour aux rayons</a>
+</div>
+
+<p class="mt-1 text-sm text-slate-500">{{ genre.books|length }} livre{{ genre.books|length > 1 ? 's' }} rangé{{ genre.books|length > 1 ? 's' }} ici.</p>
+
+{{ form_start(form, {attr: {class: 'mt-5 rounded-xl border border-slate-200 bg-white p-4'}}) }}
+    {{ form_row(form.name) }}
+
+    <div class="mt-5 flex flex-wrap gap-2">
+        <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700">
+            Enregistrer
+        </button>
+        <a href="{{ path('admin_genre_index') }}" class="rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-700 hover:bg-slate-50">
+            Annuler
+        </a>
+    </div>
+{{ form_end(form) }}
+
+<form method="post" action="{{ path('admin_genre_delete', {id: genre.id}) }}" class="mt-6"
+      onsubmit="return confirm('Supprimer le rayon « {{ genre.name|e('js') }} » ? Les livres seront conservés, sans rayon.');">
+    <input type="hidden" name="_token" value="{{ csrf_token('supprimer-rayon-' ~ genre.id) }}">
+    <button type="submit" class="text-sm text-red-700 hover:underline">Supprimer ce rayon</button>
+</form>
+{% endblock %}

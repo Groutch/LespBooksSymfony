@@ -43,11 +43,12 @@ class BookType extends AbstractType
                 'help' => 'Séparez par une virgule. Une catégorie proche existante sera réutilisée.',
             ])
             ->add('genre', EntityType::class, [
-                'label' => 'Genre',
+                'label' => 'Rayon',
                 'class' => Genre::class,
                 'choice_label' => 'name',
                 'required' => false,
                 'placeholder' => '—',
+                'help' => 'Où le livre est range physiquement.',
             ])
             ->add('isbn13', TextType::class, [
                 'label' => 'ISBN-13',

@@ -15,11 +15,6 @@ class OpenLibraryProvider extends AbstractMetadataProvider
 {
     private const string ENDPOINT = 'https://openlibrary.org/api/books';
 
-    /**
-     * Plafond volontairement bas : ces catégories servent au rangement en rayon.
-     */
-    private const int MAX_SUBJECTS = 6;
-
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly LoggerInterface $logger,
@@ -78,7 +73,9 @@ class OpenLibraryProvider extends AbstractMetadataProvider
             publisher: $this->names($volume['publishers'] ?? null)[0] ?? null,
             publishedYear: $this->year($volume['publish_date'] ?? null),
             pageCount: $this->positiveInt($volume['number_of_pages'] ?? null),
-            categories: $this->cleanSubjects($this->names($volume['subjects'] ?? null)),
+            // Les "subjects" contributifs d'OpenLibrary sont volontairement ignores :
+            // un seul scan produisait une dizaine de categories anglaises et
+            // inexploitables pour ranger un livre sur une etagere.
             coverUrl: $this->cover($volume['cover'] ?? null),
             isbn13: $isbn13,
             sources: [$this->getName()],
@@ -107,45 +104,6 @@ class OpenLibraryProvider extends AbstractMetadataProvider
         }
 
         return array_values(array_unique($names));
-    }
-
-    /**
-     * OpenLibrary expose des centaines de "subjects" contributifs, dont des cotes
-     * de bibliothèque ("Pr6029.r8 n49 2003") et des tags techniques
-     * ("open_syllabus_project"). Sans ce filtrage, un seul scan créerait des
-     * dizaines de catégories inutilisables pour le rangement physique.
-     *
-     * @param array<int, string> $subjects
-     *
-     * @return array<int, string>
-     */
-    private function cleanSubjects(array $subjects): array
-    {
-        $kept = [];
-
-        foreach ($subjects as $subject) {
-            if (str_contains($subject, '_') || str_contains($subject, '--')) {
-                continue;
-            }
-
-            $length = mb_strlen($subject);
-            if ($length < 3 || $length > 40) {
-                continue;
-            }
-
-            // Cotes et références catalographiques : mélange de lettres et de chiffres.
-            if (1 === preg_match('/\d/', $subject) && 1 === preg_match('/[a-z]\d|\d[a-z]/i', $subject)) {
-                continue;
-            }
-
-            $kept[] = mb_convert_case($subject, \MB_CASE_TITLE, 'UTF-8');
-
-            if (\count($kept) >= self::MAX_SUBJECTS) {
-                break;
-            }
-        }
-
-        return array_values(array_unique($kept));
     }
 
     private function cover(mixed $cover): ?string

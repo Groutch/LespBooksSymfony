@@ -22,4 +22,6 @@
 ###> app ###
 # Couvertures televersees par les benevoles : donnees, pas du code.
 /public/uploads/
+# Coordonnees SSH de l'hebergement : le depot est public.
+/.deploy.local
 ###< app ###

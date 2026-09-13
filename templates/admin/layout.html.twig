@@ -1,5 +1,16 @@
 {% extends 'base.html.twig' %}
 
+{% block theme_color %}#8c3a2b{% endblock %}
+
+{% block head_extra %}
+    <link rel="manifest" href="/pwa/manifest.webmanifest">
+    {#- iOS ignore le manifeste pour l'icone : il lui faut sa propre balise. -#}
+    <link rel="apple-touch-icon" href="/pwa/icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Lespouey">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+{% endblock %}
+
 {% block body %}
 {#- Une seule definition des sections, pour que l'etat actif ne se desynchronise pas. -#}
 {% set sections = [
@@ -53,6 +64,36 @@
             </nav>
         </div>
     </header>
+
+    {#- Proposer d'installer l'administration sur l'ecran d'accueil. Le bandeau
+        reste cache tant que la plateforme n'a rien a proposer, et ne revient pas
+        une fois ecarte. -#}
+    <div data-controller="pwa-install" data-pwa-install-sw-url-value="/sw.js">
+        <div data-pwa-install-target="banniere" class="hidden">
+            <div class="surface mx-auto mt-5 flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-3 p-3 sm:mt-6">
+                <img src="/pwa/icons/icon-192.png" alt="" width="40" height="40" class="size-10 shrink-0 rounded-xs">
+
+                <div class="min-w-0 flex-1 text-sm">
+                    <p class="font-medium">Installer l'application</p>
+                    <p class="text-ink-muted">
+                        Pour ouvrir l'administration depuis l'écran d'accueil, sans passer par le navigateur.
+                        <span data-pwa-install-target="consigneIos" class="hidden">
+                            Appuyez sur <strong class="font-medium">Partager</strong>,
+                            puis <strong class="font-medium">Sur l'écran d'accueil</strong>.
+                        </span>
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button type="button" data-pwa-install-target="actionAndroid"
+                            data-action="pwa-install#installer"
+                            class="btn btn-primary hidden min-h-10 px-4 text-sm">Installer</button>
+                    <button type="button" data-action="pwa-install#rejeter"
+                            class="btn btn-ghost min-h-10 px-3 text-sm">Plus tard</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <main class="mx-auto max-w-6xl px-5 py-6 sm:py-8">
         {% for label, messages in app.flashes(['success', 'error']) %}

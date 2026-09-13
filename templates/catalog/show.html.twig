@@ -51,10 +51,17 @@
             </p>
         {% endif %}
 
-        {% if book.genre %}
-            <p class="mt-6 text-xs font-medium uppercase tracking-wider text-ink-faint">Rayon</p>
-            <p class="mt-1.5">
-                <a href="{{ path('catalog_index', {genre: book.genre.slug}) }}" class="chip hover:border-accent hover:text-accent">{{ book.genre.name }}</a>
+        {#- Le rayon dit quel meuble, la position ou se baisser une fois devant :
+            les deux repondent a « ou le trouver », donc ils vont ensemble. -#}
+        {% if book.genre or book.shelfLocation %}
+            <p class="mt-6 text-xs font-medium uppercase tracking-wider text-ink-faint">Où le trouver</p>
+            <p class="mt-1.5 flex flex-wrap items-center gap-2">
+                {% if book.genre %}
+                    <a href="{{ path('catalog_index', {genre: book.genre.slug}) }}" class="chip hover:border-accent hover:text-accent">{{ book.genre.name }}</a>
+                {% endif %}
+                {% if book.shelfLocation %}
+                    <span class="text-sm text-ink-muted">{{ book.shelfLocation }}</span>
+                {% endif %}
             </p>
         {% endif %}
 

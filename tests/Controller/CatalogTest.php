@@ -6,6 +6,7 @@ namespace App\Tests\Controller;
 
 use App\Entity\Book;
 use App\Entity\Category;
+use App\Entity\Genre;
 use App\Entity\Loan;
 use App\Tests\AdminWebTestCase;
 
@@ -97,6 +98,32 @@ class CatalogTest extends AdminWebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Emprunté');
         self::assertStringNotContainsString('Dupont', (string) $this->client->getResponse()->getContent());
+    }
+
+    /**
+     * Le rayon est porte par `Genre`, la position sur l'etagere par
+     * `Book::shelfLocation`. La fiche publique affichait autrefois le second sous
+     * le mot « rayon » pendant que le premier figurait ailleurs sur la meme page.
+     */
+    public function testBookPageShowsTheGenreAsTheShelfAndTheLocationBeside(): void
+    {
+        $rayon = (new Genre())->setName('Littérature')->setSlug('litterature');
+
+        $book = (new Book())->setTitle('Germinal');
+        $book->setGenre($rayon);
+        $book->setShelfLocation('étagère 3');
+
+        $this->entityManager->persist($rayon);
+        $this->entityManager->persist($book);
+        $this->entityManager->flush();
+
+        $this->client->request('GET', '/livre/'.$book->getId());
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'Où le trouver');
+        // Le rayon reste cliquable : c'est un filtre du catalogue.
+        self::assertSelectorTextContains('a[href="/catalogue?genre=litterature"]', 'Littérature');
+        self::assertSelectorTextContains('body', 'étagère 3');
     }
 
     public function testUnknownBookReturnsNotFound(): void

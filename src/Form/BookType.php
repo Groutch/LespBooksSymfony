@@ -75,7 +75,8 @@ class BookType extends AbstractType
                 'required' => false,
             ])
             ->add('shelfLocation', TextType::class, [
-                'label' => 'Emplacement en rayon',
+                'label' => 'Position sur l\'étagère',
+                'help' => 'Le rayon se choisit juste au-dessus ; ici, où le livre se trouve dessus : « étagère 3 », « R2-B4 »…',
                 'required' => false,
             ])
             ->add('description', TextareaType::class, [

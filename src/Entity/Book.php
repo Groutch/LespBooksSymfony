@@ -55,7 +55,12 @@ class Book
     private ?string $language = null;
 
     /**
-     * Emplacement physique du livre dans la bibliothèque.
+     * Position du livre *sur* son rayon : « étagère 3 », « R2-B4 »…
+     *
+     * Ce n'est pas le rayon lui-même, porté par `Genre` : celui-ci dit quel
+     * meuble, celui-là où se baisser une fois devant. Les confondre avait mené
+     * la fiche publique à afficher ce champ sous le mot « rayon » alors que le
+     * vrai rayon figurait ailleurs sur la même page.
      */
     #[ORM\Column(length: 60, nullable: true)]
     private ?string $shelfLocation = null;

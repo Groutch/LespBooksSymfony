@@ -3,34 +3,33 @@
 {% block title %}Rayons{% endblock %}
 
 {% block admin_content %}
-<h1 class="text-xl font-semibold">Rayons <span class="text-slate-400 font-normal">({{ genres|length }})</span></h1>
-<p class="mt-1 text-sm text-slate-500">
+<h1 class="font-display text-2xl font-semibold tracking-tight">
+    Rayons <span class="font-sans text-lg font-normal text-ink-faint tabular">({{ genres|length }})</span>
+</h1>
+<p class="mt-1 max-w-[62ch] text-sm text-ink-muted">
     Le rayon est l'endroit où le livre est physiquement rangé. Chaque livre en a un seul.
 </p>
 
-{{ form_start(form, {attr: {class: 'mt-4 rounded-xl border border-slate-200 bg-white p-4'}}) }}
+{{ form_start(form, {attr: {class: 'surface mt-5 p-4'}}) }}
     <div class="flex flex-wrap items-end gap-3">
         <div class="min-w-64 flex-1">{{ form_row(form.name) }}</div>
-        <button type="submit" class="mb-4 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700">
-            Ajouter le rayon
-        </button>
+        <button type="submit" class="btn btn-primary mb-5">Ajouter le rayon</button>
     </div>
 {{ form_end(form) }}
 
 {% if genres is empty %}
-    <p class="mt-6 rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
+    <p class="mt-6 rounded-xs border border-dashed border-line-field p-10 text-center text-ink-muted">
         Aucun rayon. Créez-les d'abord, ils seront ensuite proposés à chaque scan.
     </p>
 {% else %}
-    <ul class="mt-4 divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+    <ul class="surface mt-5 divide-y divide-line">
         {% for genre in genres %}
             <li class="flex items-center gap-3 px-4 py-3">
                 <div class="min-w-0 flex-1">
                     <p class="truncate font-medium">{{ genre.name }}</p>
-                    <p class="text-sm text-slate-500">{{ genre.books|length }} livre{{ genre.books|length > 1 ? 's' }}</p>
+                    <p class="text-sm text-ink-muted">{{ genre.books|length }} livre{{ genre.books|length > 1 ? 's' }}</p>
                 </div>
-                <a href="{{ path('admin_genre_edit', {id: genre.id}) }}"
-                   class="shrink-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50">Modifier</a>
+                <a href="{{ path('admin_genre_edit', {id: genre.id}) }}" class="btn btn-ghost shrink-0 px-3 text-sm">Modifier</a>
             </li>
         {% endfor %}
     </ul>

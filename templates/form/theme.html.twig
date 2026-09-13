@@ -1,20 +1,30 @@
 {% use 'form_div_layout.html.twig' %}
 
 {#- Habille les formulaires Symfony aux couleurs du site : sans ce theme, les
-    champs sont rendus sans classes et les libelles se collent aux widgets. -#}
+    champs sont rendus sans classes et les libelles se collent aux widgets.
+
+    Attention : ce theme ne peut surcharger que des blocs *existants* de
+    `form_div_layout.html.twig`. Il n'y a pas de `file_widget` ; un `parent()`
+    dessus casserait toutes les pages portant un champ fichier. -#}
 
 {%- block form_row -%}
-    {%- set row_attr = row_attr|merge({class: row_attr.class|default('mb-4')}) -%}
+    {%- set row_attr = row_attr|merge({class: row_attr.class|default('mb-5')}) -%}
     {{- parent() -}}
 {%- endblock form_row -%}
 
 {%- block form_label -%}
-    {%- set label_attr = label_attr|merge({class: label_attr.class|default('block text-sm font-medium text-slate-700')}) -%}
+    {%- set label_attr = label_attr|merge({class: label_attr.class|default('mb-1 block text-sm font-medium text-ink')}) -%}
     {{- parent() -}}
 {%- endblock form_label -%}
 
+{#- Tout le style du champ tient desormais dans la classe `field`, definie une
+    seule fois dans `assets/styles/app.css`. C'est la raison d'etre de la couche
+    de composants : ici, le style ne peut pas s'ecrire dans un gabarit. -#}
 {%- block widget_attributes -%}
-    {%- set attr = attr|merge({class: attr.class|default('mt-1 w-full rounded-lg border px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500') ~ (errors|length ? ' border-red-400' : ' border-slate-300')}) -%}
+    {%- set attr = attr|merge({class: attr.class|default('field')}) -%}
+    {%- if errors|length -%}
+        {%- set attr = attr|merge({'aria-invalid': 'true'}) -%}
+    {%- endif -%}
     {{- parent() -}}
 {%- endblock widget_attributes -%}
 
@@ -23,21 +33,26 @@
     {{- parent() -}}
 {%- endblock textarea_widget -%}
 
+{#- La case a cocher ne prend pas `field` : elle n'occupe pas la largeur et
+    n'a pas de hauteur minimale de 44 px. -#}
 {%- block checkbox_widget -%}
-    {%- set attr = attr|merge({class: attr.class|default('rounded border-slate-300 text-emerald-600 focus:ring-emerald-500')}) -%}
+    {%- set attr = attr|merge({class: attr.class|default('size-4 accent-accent')}) -%}
     {{- parent() -}}
 {%- endblock checkbox_widget -%}
 
 {%- block form_help -%}
-    {%- set help_attr = help_attr|merge({class: help_attr.class|default('mt-1 text-xs text-slate-500')}) -%}
+    {%- set help_attr = help_attr|merge({class: help_attr.class|default('mt-1 text-xs text-ink-muted')}) -%}
     {{- parent() -}}
 {%- endblock form_help -%}
 
+{#- Les erreurs restent dans une liste : `CategoryAdminTest` s'y accroche
+    (`assertSelectorTextContains('li', ...)`), et c'est aussi la structure la
+    plus juste pour un lecteur d'ecran. -#}
 {%- block form_errors -%}
     {%- if errors|length > 0 -%}
         <ul class="mt-1 space-y-0.5">
             {%- for error in errors -%}
-                <li class="text-sm text-red-700" id="{{ id ~ '_error' ~ loop.index }}">{{ error.message }}</li>
+                <li class="text-sm text-danger" id="{{ id ~ '_error' ~ loop.index }}">{{ error.message }}</li>
             {%- endfor -%}
         </ul>
     {%- endif -%}

@@ -1,10 +1,8 @@
-import './stimulus_bootstrap.js';
 /*
- * Welcome to your app's main JavaScript file!
+ * Point d'entree charge par `importmap('app')` dans `base.html.twig`.
  *
- * This file will be included onto the page via the importmap() Twig function,
- * which should already be in your base.html.twig.
+ * L'import du CSS est ce qui declenche la compilation Tailwind et l'emission
+ * de la balise <link> par AssetMapper : sans lui, le site sort sans style.
  */
+import './stimulus_bootstrap.js';
 import './styles/app.css';
-
-console.log('This log comes from assets/app.js - welcome to AssetMapper! 🎉');

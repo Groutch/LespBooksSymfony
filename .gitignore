@@ -24,4 +24,6 @@
 /public/uploads/
 # Coordonnees SSH de l'hebergement : le depot est public.
 /.deploy.local
+# Maquettes de travail du compagnon visuel de brainstorming.
+/.superpowers/
 ###< app ###

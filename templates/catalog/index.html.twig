@@ -2,98 +2,160 @@
 
 {% block title %}Rechercher un livre{% endblock %}
 
-{% block public_content %}
-<h1 class="text-xl font-semibold">Rechercher un livre</h1>
+{#- Lien de retrait d'un filtre : on repart de la query string courante, privee
+    de la cle visee et de la pagination, qui n'a plus de sens apres un changement
+    de filtre. -#}
+{% macro sans(cle) %}
+    {{- path('catalog_index', app.request.query.all|filter((v, k) => k != cle and k != 'page')) -}}
+{% endmacro %}
 
-<form method="get" class="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-    <div class="flex gap-2">
-        <input type="search" name="q" value="{{ criteria.query }}" placeholder="Titre, auteur, éditeur, ISBN…"
-               class="flex-1 rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
-        <button type="submit" class="rounded-lg bg-slate-800 px-4 py-2 font-medium text-white hover:bg-slate-900">Chercher</button>
+{% block public_content %}
+{% import _self as url %}
+
+{% set selectedCategory = criteria.category ? categories|filter(c => c.slug == criteria.category)|first : null %}
+{% set selectedGenre = criteria.genre ? genres|filter(g => g.slug == criteria.genre)|first : null %}
+
+<h1 class="font-display text-3xl font-semibold tracking-tight">Rechercher un livre</h1>
+
+<form method="get" class="mt-6">
+    <div class="flex max-w-2xl gap-2">
+        <label for="recherche" class="sr-only">Titre, auteur, éditeur ou ISBN</label>
+        <input id="recherche" type="search" name="q" value="{{ criteria.query }}" class="field"
+               placeholder="Titre, auteur, éditeur, ISBN…">
+        <button type="submit" class="btn btn-primary shrink-0">Chercher</button>
     </div>
 
-    <div class="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
-        <label class="block">
-            <span class="text-slate-600">Catégorie</span>
-            <select name="categorie" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5">
-                <option value="">Toutes</option>
-                {% for category in categories %}
-                    <option value="{{ category.slug }}" {{ category.slug == criteria.category ? 'selected' }}>{{ category.name }}</option>
-                {% endfor %}
-            </select>
-        </label>
+    {#- Les filtres actifs sont visibles et retirables un par un. C'est ce qui
+        manquait le plus : jusqu'ici il fallait relire les cinq controles pour
+        savoir ce qui etait filtre. -#}
+    {% if criteria.hasFilters %}
+        <div class="mt-4 flex flex-wrap items-center gap-2">
+            <span class="text-sm text-ink-muted">Filtres :</span>
 
-        <label class="block">
-            <span class="text-slate-600">Genre</span>
-            <select name="genre" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5">
-                <option value="">Tous</option>
-                {% for genre in genres %}
-                    <option value="{{ genre.slug }}" {{ genre.slug == criteria.genre ? 'selected' }}>{{ genre.name }}</option>
-                {% endfor %}
-            </select>
-        </label>
+            {% if criteria.query %}
+                <a href="{{ url.sans('q') }}" class="chip chip-active">« {{ criteria.query }} » <span aria-hidden="true">✕</span><span class="sr-only">retirer</span></a>
+            {% endif %}
+            {% if selectedCategory %}
+                <a href="{{ url.sans('categorie') }}" class="chip chip-active">{{ selectedCategory.name }} <span aria-hidden="true">✕</span><span class="sr-only">retirer</span></a>
+            {% endif %}
+            {% if selectedGenre %}
+                <a href="{{ url.sans('genre') }}" class="chip chip-active">Rayon {{ selectedGenre.name }} <span aria-hidden="true">✕</span><span class="sr-only">retirer</span></a>
+            {% endif %}
+            {% if selectedAuthor %}
+                <a href="{{ url.sans('auteur') }}" class="chip chip-active">{{ selectedAuthor.name }} <span aria-hidden="true">✕</span><span class="sr-only">retirer</span></a>
+            {% endif %}
+            {% if criteria.yearFrom or criteria.yearTo %}
+                <a href="{{ path('catalog_index', app.request.query.all|filter((v, k) => k not in ['anneeMin', 'anneeMax', 'page'])) }}" class="chip chip-active">
+                    {% if criteria.yearFrom and criteria.yearTo %}{{ criteria.yearFrom }}–{{ criteria.yearTo }}
+                    {%- elseif criteria.yearFrom %}après {{ criteria.yearFrom }}
+                    {%- else %}avant {{ criteria.yearTo }}{% endif %}
+                    <span aria-hidden="true">✕</span><span class="sr-only">retirer</span>
+                </a>
+            {% endif %}
+            {% if criteria.availableOnly %}
+                <a href="{{ url.sans('disponibles') }}" class="chip chip-active">Disponibles <span aria-hidden="true">✕</span><span class="sr-only">retirer</span></a>
+            {% endif %}
 
-        <label class="block">
-            <span class="text-slate-600">Année min.</span>
-            <input type="number" name="anneeMin" value="{{ criteria.yearFrom }}" min="1400" max="2200"
-                   class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5">
-        </label>
+            <a href="{{ path('catalog_index') }}" class="text-sm text-accent underline underline-offset-2">Tout effacer</a>
+        </div>
+    {% endif %}
 
-        <label class="block">
-            <span class="text-slate-600">Année max.</span>
-            <input type="number" name="anneeMax" value="{{ criteria.yearTo }}" min="1400" max="2200"
-                   class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5">
-        </label>
+    {#- <details> natif : les filtres se replient sans une ligne de JavaScript,
+        et les <select> restent dans le formulaire, donc la soumission GET est
+        inchangee. Ouvert d'office si un filtre est deja pose. -#}
+    <details class="mt-4" {{ (selectedCategory or selectedGenre or criteria.yearFrom or criteria.yearTo or criteria.availableOnly) ? 'open' }}>
+        <summary class="inline-flex cursor-pointer list-none items-center gap-1.5 text-sm text-ink-muted hover:text-accent">
+            <span class="text-xs" aria-hidden="true">▸</span> Affiner la recherche
+        </summary>
 
-        <label class="block">
-            <span class="text-slate-600">Trier par</span>
-            <select name="tri" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5">
+        <div class="surface mt-3 grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4">
+            <label class="block text-sm">
+                <span class="mb-1 block font-medium">Catégorie</span>
+                <select name="categorie" class="field">
+                    <option value="">Toutes</option>
+                    {% for category in categories %}
+                        <option value="{{ category.slug }}" {{ category.slug == criteria.category ? 'selected' }}>{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label class="block text-sm">
+                <span class="mb-1 block font-medium">Rayon</span>
+                <select name="genre" class="field">
+                    <option value="">Tous</option>
+                    {% for genre in genres %}
+                        <option value="{{ genre.slug }}" {{ genre.slug == criteria.genre ? 'selected' }}>{{ genre.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <div class="text-sm">
+                <span class="mb-1 block font-medium">Année de publication</span>
+                <div class="flex items-center gap-2">
+                    <label class="sr-only" for="annee-min">Année minimale</label>
+                    <input id="annee-min" type="number" name="anneeMin" value="{{ criteria.yearFrom }}" min="1400" max="2200"
+                           placeholder="de" class="field tabular">
+                    <span class="text-ink-faint" aria-hidden="true">–</span>
+                    <label class="sr-only" for="annee-max">Année maximale</label>
+                    <input id="annee-max" type="number" name="anneeMax" value="{{ criteria.yearTo }}" min="1400" max="2200"
+                           placeholder="à" class="field tabular">
+                </div>
+            </div>
+
+            <div class="text-sm">
+                <span class="mb-1 block font-medium">Disponibilité</span>
+                <label class="flex min-h-11 items-center gap-2 text-ink-muted">
+                    <input type="checkbox" name="disponibles" value="1" {{ criteria.availableOnly ? 'checked' }} class="size-4 accent-accent">
+                    Disponibles seulement
+                </label>
+            </div>
+
+            {% if selectedAuthor %}
+                <input type="hidden" name="auteur" value="{{ selectedAuthor.slug }}">
+            {% endif %}
+
+            <div class="sm:col-span-2 lg:col-span-4">
+                <button type="submit" class="btn btn-ghost">Appliquer les filtres</button>
+            </div>
+        </div>
+    </details>
+
+    {#- Le tri rejoint le compte de resultats, la ou l'oeil le cherche. -#}
+    <div class="mt-6 flex flex-wrap items-baseline justify-between gap-3 border-b border-line pb-3">
+        <p class="text-ink-muted">
+            <strong class="font-medium text-ink tabular">{{ total }}</strong> résultat{{ total > 1 ? 's' }}.
+        </p>
+        <label class="flex items-center gap-2 text-sm text-ink-muted">
+            Trier par
+            <select name="tri" class="field min-h-0 w-auto py-1.5" onchange="this.form.submit()">
                 <option value="recent" {{ criteria.sort == 'recent' ? 'selected' }}>Ajout récent</option>
                 <option value="title" {{ criteria.sort == 'title' ? 'selected' }}>Titre</option>
                 <option value="year" {{ criteria.sort == 'year' ? 'selected' }}>Année</option>
             </select>
+            <noscript><button type="submit" class="btn btn-ghost min-h-0 py-1">Trier</button></noscript>
         </label>
-    </div>
-
-    <div class="mt-3 flex flex-wrap items-center gap-4 text-sm">
-        <label class="flex items-center gap-2 text-slate-600">
-            <input type="checkbox" name="disponibles" value="1" {{ criteria.availableOnly ? 'checked' }} class="rounded border-slate-300">
-            Disponibles seulement
-        </label>
-
-        {% if selectedAuthor %}
-            <span class="rounded-full bg-slate-100 px-3 py-1">
-                Auteur : {{ selectedAuthor.name }}
-                <input type="hidden" name="auteur" value="{{ selectedAuthor.slug }}">
-            </span>
-        {% endif %}
-
-        {% if criteria.hasFilters %}
-            <a href="{{ path('catalog_index') }}" class="text-slate-500 hover:text-slate-800">Tout effacer</a>
-        {% endif %}
     </div>
 </form>
 
-<p class="mt-5 text-slate-600">{{ total }} résultat{{ total > 1 ? 's' }}.</p>
-
 {% if total == 0 %}
-    <p class="mt-4 rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
+    <p class="mt-8 rounded-xs border border-dashed border-line-field p-10 text-center text-ink-muted">
         Aucun livre ne correspond à cette recherche.
     </p>
 {% else %}
-    <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div class="mt-6 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
         {% for book in books %}
             {{ include('catalog/_card.html.twig') }}
         {% endfor %}
     </div>
 
     {% if pageCount > 1 %}
-        <div class="mt-6 flex flex-wrap gap-1">
+        <nav class="mt-10 flex flex-wrap gap-1.5" aria-label="Pagination">
             {% for p in 1..pageCount %}
                 <a href="{{ path('catalog_index', app.request.query.all|merge({page: p})) }}"
-                   class="rounded px-3 py-1.5 text-sm {{ p == criteria.page ? 'bg-slate-800 text-white' : 'border border-slate-300 bg-white hover:bg-slate-50' }}">{{ p }}</a>
+                   {{ p == criteria.page ? 'aria-current="page"' }}
+                   class="tabular rounded-xs px-3 py-2 text-sm {{ p == criteria.page ? 'bg-accent text-surface' : 'border border-line bg-surface hover:border-accent hover:text-accent' }}">{{ p }}</a>
             {% endfor %}
-        </div>
+        </nav>
     {% endif %}
 {% endif %}
 {% endblock %}

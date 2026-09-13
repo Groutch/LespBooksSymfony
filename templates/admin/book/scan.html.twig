@@ -4,7 +4,7 @@
 
 {% block admin_content %}
 <div data-controller="barcode-scanner"
-     data-barcode-scanner-lookup-url-value="{{ path('admin_book_lookup', {isbn: '0000000000000'}) }}"
+     data-barcode-scanner-check-url-value="{{ path('admin_book_check', {isbn: '0000000000000'}) }}"
      data-barcode-scanner-new-url-value="{{ path('admin_book_new') }}">
 
     <h1 class="font-display text-2xl font-semibold tracking-tight">Scanner un livre</h1>

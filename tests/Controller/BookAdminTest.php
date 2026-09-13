@@ -24,6 +24,54 @@ class BookAdminTest extends AdminWebTestCase
         self::assertResponseIsSuccessful();
     }
 
+    /**
+     * Le scanner ne doit interroger que la base : c'est ce qui evite de lancer
+     * MetadataFetcher deux fois par livre, une fois pour rien.
+     */
+    public function testIsbnCheckReportsAnUnknownIsbnWithoutQueryingExternalSources(): void
+    {
+        $this->client->loginUser($this->createAdmin());
+
+        $this->client->request('GET', '/admin/livres/verifier-isbn/9782070360024');
+
+        self::assertResponseIsSuccessful();
+
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
+
+        self::assertSame('9782070360024', $data['isbn13']);
+        self::assertNull($data['existing']);
+        // Une reponse allegee : aucune cle « book », donc aucune source externe.
+        self::assertArrayNotHasKey('book', $data);
+    }
+
+    public function testIsbnCheckPointsToTheExistingBook(): void
+    {
+        $this->client->loginUser($this->createAdmin());
+
+        $book = (new Book())->setTitle('Germinal')->setIsbn13('9782070360024');
+        $this->entityManager->persist($book);
+        $this->entityManager->flush();
+
+        // L'ISBN tirete doit etre reconnu : c'est la forme imprimee sur les livres.
+        $this->client->request('GET', '/admin/livres/verifier-isbn/978-2-07-036002-4');
+
+        self::assertResponseIsSuccessful();
+
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
+
+        self::assertSame('Germinal', $data['existing']['title']);
+        self::assertSame('/admin/livres/'.$book->getId().'/modifier', $data['existing']['url']);
+    }
+
+    public function testIsbnCheckRejectsAnInvalidCode(): void
+    {
+        $this->client->loginUser($this->createAdmin());
+
+        $this->client->request('GET', '/admin/livres/verifier-isbn/1234567890123');
+
+        self::assertResponseStatusCodeSame(422);
+    }
+
     public function testAdminCanCreateBookWithFreeTextAuthorsAndCategories(): void
     {
         $this->client->loginUser($this->createAdmin());

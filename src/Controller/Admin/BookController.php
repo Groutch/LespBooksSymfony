@@ -62,6 +62,38 @@ class BookController extends AbstractController
     }
 
     /**
+     * Dit seulement si l'ISBN est déjà au catalogue. Aucune source externe.
+     *
+     * Le scanner n'a pas besoin des métadonnées : il redirige soit vers la fiche
+     * existante, soit vers le formulaire, qui les cherche lui-même. Les demander
+     * ici faisait tourner MetadataFetcher deux fois par livre scanné — quatre
+     * secondes d'attente pour un résultat aussitôt jeté, puis quatre de plus.
+     */
+    #[Route('/verifier-isbn/{isbn}', name: 'admin_book_check', requirements: ['isbn' => '[0-9Xx\-]{10,17}'], methods: ['GET'])]
+    public function check(
+        string $isbn,
+        IsbnNormalizer $isbnNormalizer,
+        BookRepository $bookRepository,
+    ): JsonResponse {
+        $isbn13 = $isbnNormalizer->normalize($isbn);
+
+        if (null === $isbn13) {
+            return $this->json(['reason' => 'isbn_invalide'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $existing = $bookRepository->findOneByIsbn($isbn13);
+
+        return $this->json([
+            'isbn13' => $isbn13,
+            'existing' => null === $existing ? null : [
+                'id' => $existing->getId(),
+                'title' => $existing->getTitle(),
+                'url' => $this->generateUrl('admin_book_edit', ['id' => $existing->getId()]),
+            ],
+        ]);
+    }
+
+    /**
      * Interrogée en arrière-plan par le formulaire : l'écran s'affiche
      * immédiatement et se complète quand les sources externes répondent.
      */

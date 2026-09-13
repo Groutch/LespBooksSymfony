@@ -5,7 +5,6 @@
 {% set sections = [
     {label: 'Livres',     route: 'admin_book_index',     prefixe: 'admin_book'},
     {label: 'Rayons',     route: 'admin_genre_index',    prefixe: 'admin_genre'},
-    {label: 'Catégories', route: 'admin_category_index', prefixe: 'admin_category'},
     {label: 'Prêts',      route: 'admin_loan_index',     prefixe: 'admin_loan'}
 ] %}
 {% set routeCourante = app.request.attributes.get('_route') %}

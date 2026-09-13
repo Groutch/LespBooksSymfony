@@ -66,8 +66,10 @@ ssh-key: ## Installe votre cle publique sur l'hebergement (mot de passe demande 
 release: ## Livraison complete : pousse, attend OVH, vide le cache de production
 	DEPLOY_SSH='$(DEPLOY_SSH)' DEPLOY_PATH='$(DEPLOY_PATH)' DEPLOY_PHP='$(DEPLOY_PHP)' DEPLOY_URL='$(DEPLOY_URL)' ./deploy/release.sh
 
+# Coordonnees transmises par Make, comme pour `release` : la syntaxe d'un Makefile
+# et celle de `source` different, et les scripts ne voyaient rien de .deploy.local.
 migrate-prod: ## Migrations sur l'hebergement (make migrate-prod RUN=1 pour appliquer)
-	./deploy/migrate.sh $(if $(RUN),--run,)
+	DEPLOY_SSH='$(DEPLOY_SSH)' DEPLOY_PATH='$(DEPLOY_PATH)' DEPLOY_PHP='$(DEPLOY_PHP)' ./deploy/migrate.sh $(if $(RUN),--run,)
 
 prod-refresh: ## Indispensable apres chaque deploiement : vide le cache de production
 	ssh $(DEPLOY_SSH) 'cd $(DEPLOY_PATH) && git log -1 --oneline && $(DEPLOY_PHP) bin/console cache:clear'

@@ -17,8 +17,11 @@
         {% endif %}
 
         {% if book.available %}
+            {#- Le rayon est porte par `Genre` et affiche sous son propre intitule
+                plus bas : le repeter ici serait du bruit. Cette ligne ne dit plus
+                que la disponibilite. -#}
             <p class="alert alert-success mt-4 text-sm">
-                <strong class="font-medium">Disponible</strong>{% if book.shelfLocation %} · rayon {{ book.shelfLocation }}{% endif %}
+                <strong class="font-medium">Disponible</strong>
             </p>
         {% else %}
             {# Aucun nom d'emprunteur ici : le site est public. #}

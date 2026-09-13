@@ -15,7 +15,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-if [ -f .deploy.local ]; then
+# Make transmet deja les coordonnees (cible `migrate-prod`). La lecture directe
+# ne sert qu'a l'appel manuel du script.
+if [ -z "${DEPLOY_SSH:-}" ] && [ -f .deploy.local ]; then
     # shellcheck disable=SC1091
     . ./.deploy.local
 fi

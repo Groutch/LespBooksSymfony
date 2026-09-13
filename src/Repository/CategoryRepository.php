@@ -35,7 +35,48 @@ class CategoryRepository extends ServiceEntityRepository
     }
 
     /**
-     * Catégories triées par nom, avec le nombre de livres, pour l'écran d'administration.
+     * Supprime les catégories qui ne sont plus rattachées à aucun livre.
+     *
+     * Une catégorie n'est qu'un mot-clé : sans livre pour la porter, elle n'a plus
+     * d'existence propre. Sans ce ménage, retirer un thème du dernier livre qui le
+     * portait laisserait une étiquette fantôme dans les filtres du catalogue public.
+     *
+     * Volontairement en DQL : passer par l'`EntityManager` obligerait à charger
+     * toutes les catégories pour n'en supprimer souvent aucune. En contrepartie,
+     * l'UnitOfWork n'en sait rien — appeler après le flush, jamais avant.
+     *
+     * @return int nombre de catégories supprimées
+     */
+    public function deleteOrphans(): int
+    {
+        // Deux requêtes plutôt qu'une : MySQL refuse qu'un DELETE lise sa propre
+        // table dans une sous-requête (erreur 1093). Le volume est de toute façon
+        // celui d'une bibliothèque de village, pas d'un catalogue national.
+        /** @var array<int, int> $orphelines */
+        $orphelines = $this->createQueryBuilder('c')
+            ->select('c.id')
+            ->leftJoin('c.books', 'livre')
+            ->groupBy('c.id')
+            ->having('COUNT(livre.id) = 0')
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        if ([] === $orphelines) {
+            return 0;
+        }
+
+        return (int) $this->createQueryBuilder('c')
+            ->delete()
+            ->where('c.id IN (:ids)')
+            ->setParameter('ids', $orphelines)
+            ->getQuery()
+            ->execute();
+    }
+
+    /**
+     * Catégories triées par nom, avec le nombre de livres.
+     *
+     * Sert la page d'accueil publique, qui affiche le compte à côté de chaque thème.
      *
      * @return array<int, array{category: Category, bookCount: int}>
      */

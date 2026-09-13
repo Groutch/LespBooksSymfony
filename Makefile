@@ -11,7 +11,7 @@ DEPLOY_PATH ?= lesp
 DEPLOY_PHP ?= php
 
 .DEFAULT_GOAL := help
-.PHONY: help up stop down restart logs shell cc assets test lint migrate deploy release migrate-prod prod-refresh
+.PHONY: help up stop down restart logs shell cc assets test lint migrate deploy release ssh-key migrate-prod prod-refresh
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -57,6 +57,9 @@ migrate: ## Applique les migrations sur app et app_test
 
 deploy: ## Construit la branche deploy livree a OVH (make deploy PUSH=1 pour l'envoyer)
 	./deploy/build.sh $(if $(PUSH),--push,)
+
+ssh-key: ## Installe votre cle publique sur l'hebergement (mot de passe demande une fois)
+	ssh-copy-id $(DEPLOY_SSH)
 
 # Les coordonnees sont transmises par Make : lui seul lit .deploy.local de
 # facon fiable, la syntaxe d'un Makefile et celle de `source` differant.

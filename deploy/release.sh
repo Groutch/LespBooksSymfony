@@ -41,6 +41,21 @@ fi
 ATTENTE_MAX="${ATTENTE_MAX:-180}"
 INTERVALLE=5
 
+# Une seule connexion SSH pour tout le script, reutilisee par toutes les commandes.
+# Sans cela, la boucle d'attente rouvre une session toutes les 5 secondes : avec une
+# authentification par mot de passe, elle le redemanderait une trentaine de fois.
+# Avec une cle, c'est simplement plus rapide.
+SSH_CTL="$(mktemp -u "${TMPDIR:-/tmp}/lesp-ssh-XXXXXXXX")"
+SSH_OPTS=(-o ControlMaster=auto -o ControlPath="$SSH_CTL" -o ControlPersist=180)
+fermer_connexion() {
+    ssh -O exit -o ControlPath="$SSH_CTL" "$DEPLOY_SSH" 2>/dev/null || true
+}
+trap fermer_connexion EXIT
+
+# Premiere connexion : elle porte l'authentification, les suivantes la reutilisent.
+echo "==> Connexion a l'hebergement"
+ssh "${SSH_OPTS[@]}" "$DEPLOY_SSH" true
+
 ./deploy/build.sh --push
 
 # refs/heads/deploy et non `deploy` : le depot contient aussi un dossier deploy/,
@@ -51,7 +66,7 @@ echo "==> Attente de la replication par OVH (livraison ${ATTENDU:0:7})"
 
 DEBUT=$(date +%s)
 while :; do
-    DISTANT=$(ssh "$DEPLOY_SSH" "cd $DEPLOY_PATH && git rev-parse HEAD" 2>/dev/null || true)
+    DISTANT=$(ssh "${SSH_OPTS[@]}" "$DEPLOY_SSH" "cd $DEPLOY_PATH && git rev-parse HEAD" 2>/dev/null || true)
 
     if [ "$DISTANT" = "$ATTENDU" ]; then
         echo "    OVH est a jour"
@@ -73,7 +88,7 @@ done
 
 echo
 echo "==> Vidage du cache de production"
-ssh "$DEPLOY_SSH" "cd $DEPLOY_PATH && $DEPLOY_PHP bin/console cache:clear"
+ssh "${SSH_OPTS[@]}" "$DEPLOY_SSH" "cd $DEPLOY_PATH && $DEPLOY_PHP bin/console cache:clear"
 
 # Controles finaux, seulement si l'URL publique est renseignee.
 if [ -n "${DEPLOY_URL:-}" ]; then

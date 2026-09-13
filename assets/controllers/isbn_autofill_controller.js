@@ -86,7 +86,7 @@ export default class extends Controller {
         if (!this.hasStatusTarget) return;
 
         this.statusTarget.textContent = message;
-        this.statusTarget.classList.toggle('text-red-600', isError);
-        this.statusTarget.classList.toggle('text-slate-600', !isError);
+        this.statusTarget.classList.toggle('text-danger', isError);
+        this.statusTarget.classList.toggle('text-ink-muted', !isError);
     }
 }

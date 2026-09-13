@@ -8,7 +8,7 @@ import { Controller } from '@hotwired/stimulus';
  */
 export default class extends Controller {
     static targets = ['video', 'status', 'manual'];
-    static values = { lookupUrl: String, newUrl: String };
+    static values = { checkUrl: String, newUrl: String };
 
     connect() {
         this.stream = null;
@@ -81,7 +81,7 @@ export default class extends Controller {
 
     handleCode(rawValue) {
         this.stop();
-        this.setStatus(`Code détecté : ${rawValue}. Recherche en cours…`);
+        this.setStatus(`Code détecté : ${rawValue}…`);
         this.lookup(rawValue);
     }
 
@@ -90,16 +90,21 @@ export default class extends Controller {
         const value = this.manualTarget.value.trim();
 
         if (value !== '') {
-            this.setStatus('Recherche en cours…');
             this.lookup(value);
         }
     }
 
+    /**
+     * Verifie seulement si le livre est deja au catalogue : une requete en base,
+     * quelques millisecondes. Les metadonnees sont l'affaire du formulaire, qui
+     * les cherche pendant que le benevole le decouvre. Les demander ici aussi
+     * ajoutait quatre secondes d'attente pour un resultat jete.
+     */
     async lookup(isbn) {
         const cleaned = isbn.replace(/[^0-9Xx]/g, '');
 
         try {
-            const response = await fetch(this.lookupUrlValue.replace('0000000000000', cleaned), {
+            const response = await fetch(this.checkUrlValue.replace('0000000000000', cleaned), {
                 headers: { Accept: 'application/json' },
             });
 
@@ -118,7 +123,7 @@ export default class extends Controller {
 
             window.location.href = `${this.newUrlValue}?isbn=${encodeURIComponent(data.isbn13 ?? cleaned)}`;
         } catch (error) {
-            this.setStatus('Recherche impossible. Vérifiez la connexion réseau.', true);
+            this.setStatus('Vérification impossible. Vérifiez la connexion réseau.', true);
         }
     }
 
@@ -138,7 +143,7 @@ export default class extends Controller {
 
     setStatus(message, isError = false) {
         this.statusTarget.textContent = message;
-        this.statusTarget.classList.toggle('text-red-600', isError);
-        this.statusTarget.classList.toggle('text-slate-600', !isError);
+        this.statusTarget.classList.toggle('text-danger', isError);
+        this.statusTarget.classList.toggle('text-ink-muted', !isError);
     }
 }

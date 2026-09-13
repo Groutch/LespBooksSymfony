@@ -2,6 +2,27 @@
 
 {% block body %}
 <div class="flex min-h-screen flex-col">
+    {#- Bandeau d'administration : volontairement etranger au site public, fond
+        encre sur un site creme. Une pastille d'etat ne suffisait pas — elle disait
+        « vous etes connecte » sans montrer par ou revenir. Ce bandeau separe les
+        deux mondes a l'oeil et porte le chemin de retour. -#}
+    {% if app.user %}
+        <div class="bg-ink text-paper">
+            <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-1 px-5 py-2 text-sm">
+                <span class="text-line">
+                    Connecté&nbsp;: <span class="text-paper">{{ app.user.displayName|default('bénévole') }}</span>
+                </span>
+                <span class="flex items-center gap-4">
+                    <a href="{{ path('admin_dashboard') }}"
+                       class="rounded-xs bg-paper px-2.5 py-1 font-medium text-ink hover:bg-surface">
+                        Administration
+                    </a>
+                    <a href="{{ path('app_logout') }}" class="text-line hover:text-paper">Se déconnecter</a>
+                </span>
+            </div>
+        </div>
+    {% endif %}
+
     <header class="border-b border-line bg-surface">
         <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-4">
             <a href="{{ path('home') }}" class="font-display text-lg font-semibold tracking-tight">
@@ -10,19 +31,9 @@
             <nav class="flex items-center gap-4 text-sm sm:gap-5">
                 <a href="{{ path('catalog_index') }}" class="text-ink-muted hover:text-accent">Rechercher un livre</a>
 
-                {#- Quitter l'administration et se deconnecter menent tous deux ici :
-                    sans repere, impossible de savoir si la session est encore ouverte.
-                    Sur un telephone partage entre benevoles, c'est ce qui fait qu'on
-                    repart en croyant etre sorti. -#}
-                {% if app.user %}
-                    <a href="{{ path('admin_dashboard') }}"
-                       class="chip hover:border-accent hover:text-accent"
-                       title="Vous êtes connecté — retourner à l'administration">
-                        <span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>
-                        <span class="sm:hidden">Connecté</span>
-                        <span class="hidden sm:inline">Connecté&nbsp;: {{ app.user.displayName|default('bénévole') }}</span>
-                    </a>
-                {% else %}
+                {#- Inutile quand la session est ouverte : le bandeau du dessus porte
+                    deja l'acces a l'administration et la deconnexion. -#}
+                {% if not app.user %}
                     <a href="{{ path('app_login') }}" class="text-ink-muted hover:text-accent">Espace bénévoles</a>
                 {% endif %}
             </nav>

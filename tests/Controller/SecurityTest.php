@@ -25,23 +25,29 @@ class SecurityTest extends AdminWebTestCase
 
     /**
      * Quitter l'administration et se deconnecter aboutissent tous deux a l'accueil.
-     * La pastille est le seul indice permettant de distinguer les deux etats, et
-     * evite qu'un benevole reparte en croyant avoir ferme sa session.
+     * Le bandeau est le seul indice distinguant les deux etats : sans lui, un
+     * benevole repart en croyant avoir ferme sa session. Il porte aussi le chemin
+     * de retour, une pastille d'etat seule ne montrant pas par ou revenir.
      */
-    public function testPublicHeaderShowsTheSessionBadgeOnlyWhenLoggedIn(): void
+    public function testAdminBarAppearsOnThePublicSiteOnlyWhenLoggedIn(): void
     {
-        $crawler = $this->client->request('GET', '/');
+        $this->client->request('GET', '/');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('header', 'Espace bénévoles');
-        self::assertSelectorNotExists('header a[href="/admin"]');
+        self::assertSelectorTextContains('body', 'Espace bénévoles');
+        self::assertSelectorNotExists('a[href="/admin"]');
+        self::assertSelectorNotExists('a[href="/deconnexion"]');
 
         $this->client->loginUser($this->createAdmin());
-        $crawler = $this->client->request('GET', '/');
+        $this->client->request('GET', '/');
 
-        self::assertSelectorTextContains('header', 'Connecté');
-        self::assertSelectorExists('header a[href="/admin"]');
-        self::assertSelectorTextNotContains('header', 'Espace bénévoles');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'Connecté');
+        self::assertSelectorTextContains('body', 'Admin');
+        self::assertSelectorExists('a[href="/admin"]');
+        self::assertSelectorExists('a[href="/deconnexion"]');
+        // Le lien de connexion n'a plus de raison d'etre : le bandeau le remplace.
+        self::assertSelectorTextNotContains('body', 'Espace bénévoles');
     }
 
     public function testWrongPasswordIsRejected(): void

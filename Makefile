@@ -11,10 +11,10 @@ DEPLOY_PATH ?= lesp
 DEPLOY_PHP ?= php
 
 .DEFAULT_GOAL := help
-.PHONY: help up stop down restart logs shell cc assets test lint migrate deploy migrate-prod prod-refresh
+.PHONY: help up stop down restart logs shell cc assets test lint migrate deploy release migrate-prod prod-refresh
 
 help: ## Affiche cette aide
-	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-8s\033[0m %s\n", $$1, $$2}'
+	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
 up: ## Demarre la pile sur http://127.0.0.1:8000
 	$(DC) up -d --build --force-recreate
@@ -57,6 +57,11 @@ migrate: ## Applique les migrations sur app et app_test
 
 deploy: ## Construit la branche deploy livree a OVH (make deploy PUSH=1 pour l'envoyer)
 	./deploy/build.sh $(if $(PUSH),--push,)
+
+# Les coordonnees sont transmises par Make : lui seul lit .deploy.local de
+# facon fiable, la syntaxe d'un Makefile et celle de `source` differant.
+release: ## Livraison complete : pousse, attend OVH, vide le cache de production
+	DEPLOY_SSH='$(DEPLOY_SSH)' DEPLOY_PATH='$(DEPLOY_PATH)' DEPLOY_PHP='$(DEPLOY_PHP)' DEPLOY_URL='$(DEPLOY_URL)' ./deploy/release.sh
 
 migrate-prod: ## Migrations sur l'hebergement (make migrate-prod RUN=1 pour appliquer)
 	./deploy/migrate.sh $(if $(RUN),--run,)

@@ -1,6 +1,6 @@
 {
     "app": {
-        "path": "\/assets\/app-TNXHCQF.js",
+        "path": "\/assets\/app-IdsDNqk.js",
         "type": "js"
     },
     "\/assets\/stimulus_bootstrap.js": {
@@ -8,7 +8,7 @@
         "type": "js"
     },
     "\/assets\/@symfony\/stimulus-bundle\/controllers.js": {
-        "path": "\/assets\/@symfony\/stimulus-bundle\/controllers-ybGAUnG.js",
+        "path": "\/assets\/@symfony\/stimulus-bundle\/controllers-Wu4NWOq.js",
         "type": "js"
     },
     "\/assets\/@symfony\/ux-turbo\/turbo_controller.js": {
@@ -23,10 +23,6 @@
         "path": "\/assets\/controllers\/barcode_scanner_controller-1UkDl3O.js",
         "type": "js"
     },
-    "\/assets\/controllers\/hello_controller.js": {
-        "path": "\/assets\/controllers\/hello_controller-VYgvytJ.js",
-        "type": "js"
-    },
     "\/assets\/controllers\/isbn_autofill_controller.js": {
         "path": "\/assets\/controllers\/isbn_autofill_controller-A9A6vAG.js",
         "type": "js"
@@ -36,7 +32,7 @@
         "type": "js"
     },
     "\/assets\/styles\/app.css": {
-        "path": "\/assets\/styles\/app-FlBSQJP.css",
+        "path": "\/assets\/styles\/app-K2NjakP.css",
         "type": "css"
     },
     "@hotwired\/stimulus": {

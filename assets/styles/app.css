@@ -1,1 +1,235 @@
 @import "tailwindcss";
+
+/*
+ * Identite visuelle « Papier & encre ».
+ *
+ * Ce fichier porte tout le vocabulaire visuel du site : c'est le seul endroit
+ * a modifier pour reaccorder l'ensemble. Les gabarits n'ecrivent que des
+ * utilitaires Tailwind construits sur ces jetons.
+ */
+
+/* ---------------------------------------------------------------- polices --
+ * Auto-hebergees : le CDN Google est ecarte pour un site public francais,
+ * son usage ayant ete sanctionne a plusieurs reprises par la CNIL.
+ *
+ * Fraunces est servie en statique 600 (18 ko) et non en variable : elle ne
+ * sert qu'aux titres, a une seule graisse. Demander l'axe `opsz` coutait
+ * 49 ko de plus pour un reglage qu'on n'utilise pas.
+ *
+ * Inter reste variable (48 ko) : 400, 500 et 600 sont tous necessaires, et
+ * trois fichiers statiques peseraient 72 ko.
+ *
+ * Les fichiers `latin-ext` ne sont telecharges par le navigateur que si un
+ * caractere de leur plage apparait sur la page : un nom d'auteur tcheque ou
+ * polonais. Un chargement courant ne paie donc que le `latin`, soit 65 ko.
+ */
+@font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('../fonts/fraunces-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+        U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('../fonts/fraunces-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+        U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+        U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400 600;
+    font-display: swap;
+    src: url('../fonts/inter-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+        U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400 600;
+    font-display: swap;
+    src: url('../fonts/inter-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+        U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+        U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ----------------------------------------------------------------- jetons --
+ * Chaque couleur porte en commentaire son contraste reel sur le fond creme.
+ * Ces valeurs ne sont pas negociables a la volee : les eclaircir casse la
+ * conformite AA. Trois d'entre elles ont deja ete corrigees pour cette raison.
+ */
+@theme {
+    /* Neutres chauds. Ils remplacent le `slate` froid : c'est la moitie de
+       l'identite a eux seuls. */
+    --color-paper: #f7f3ec;        /* fond de page */
+    --color-surface: #fffdf9;      /* cartes, champs */
+    --color-surface-sunk: #efe8da; /* livre sans couverture, zones creusees */
+    --color-line: #e2daca;         /* filet decoratif, jamais une frontiere de saisie */
+    --color-line-field: #948468;   /* bordure de champ : 3,59:1, seuil WCAG 1.4.11 */
+
+    --color-ink: #23201b;          /* 14,67:1 — texte courant */
+    --color-ink-muted: #6b6358;    /*  5,35:1 — texte secondaire */
+    --color-ink-faint: #756b5d;    /*  4,73:1 — tertiaire ; plus clair, il passe sous AA */
+
+    --color-accent: #8c3a2b;       /*  6,89:1 — liens et actions principales */
+    --color-accent-hover: #732f23;
+    --color-accent-wash: #f5e7e2;  /* halo de focus */
+
+    --color-success: #3f6b4a;      /*  5,29:1 sur son fond */
+    --color-success-wash: #e8f0e7;
+    --color-success-line: #c3d6c0;
+    --color-warning: #8a5e13;      /*  5,60:1 en blanc dessus — badge « Emprunte » */
+    --color-warning-wash: #f7edd8;
+    --color-warning-line: #e6d3a8;
+    --color-danger: #a33224;       /*  5,68:1 sur son fond */
+    --color-danger-wash: #f7e5e1;
+    --color-danger-line: #e3c2ba;
+
+    /* Fraunces titre, Inter texte. Les replis sont choisis pour des metriques
+       proches, afin que l'echange au chargement ne decale pas la page. */
+    --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+    /* Anguleux plutot qu'arrondi : c'est ce qui distingue du Tailwind par
+       defaut, ou tout est en `rounded-xl`. */
+    --radius-sharp: 3px;
+    --radius-card: 6px;
+
+    /* Une couverture est un objet pose, pas une vignette. */
+    --shadow-cover: 0 1px 2px rgb(35 32 27 / 0.14), 0 0 0 1px rgb(35 32 27 / 0.06);
+    --shadow-cover-lg: 0 10px 26px rgb(35 32 27 / 0.20), 0 2px 5px rgb(35 32 27 / 0.14),
+        0 0 0 1px rgb(35 32 27 / 0.07);
+}
+
+/* ------------------------------------------------------------- composants --
+ * Cinq, et pas un de plus : au-dela on reecrit Bootstrap.
+ *
+ * Ils existent parce que le meme motif se repete dans une vingtaine de
+ * gabarits, et surtout parce que `templates/form/theme.html.twig` ne peut pas
+ * ecrire son style ailleurs qu'en chaine PHP. `field` y devient une seule
+ * classe, la ou s'empilaient 200 caracteres d'utilitaires.
+ */
+
+@utility btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sharp);
+    padding: 0.55rem 1rem;
+    font-weight: 500;
+    line-height: 1.2;
+    /* 44 px : cible tactile minimale. L'administration se tient a une main,
+       debout devant une etagere. */
+    min-height: 2.75rem;
+    cursor: pointer;
+    transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+}
+
+@utility btn-primary {
+    background-color: var(--color-accent);
+    color: var(--color-surface);
+    &:hover { background-color: var(--color-accent-hover); }
+}
+
+@utility btn-ghost {
+    background-color: var(--color-surface);
+    border-color: var(--color-line-field);
+    color: var(--color-ink);
+    &:hover { background-color: var(--color-surface-sunk); }
+}
+
+@utility field {
+    width: 100%;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line-field);
+    border-radius: var(--radius-sharp);
+    padding: 0.55rem 0.7rem;
+    color: var(--color-ink);
+    min-height: 2.75rem;
+    &::placeholder { color: var(--color-ink-faint); }
+    &:focus {
+        outline: none;
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px var(--color-accent-wash);
+    }
+    /* Le theme de formulaire pose cet attribut quand le champ est en erreur. */
+    &[aria-invalid='true'] { border-color: var(--color-danger); }
+}
+
+@utility surface {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+}
+
+@utility chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--color-ink);
+}
+
+@utility chip-active {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-surface);
+}
+
+@utility chip-warn {
+    background-color: var(--color-warning);
+    border-color: var(--color-warning);
+    color: var(--color-surface);
+    font-weight: 500;
+}
+
+@utility alert {
+    border: 1px solid;
+    border-radius: var(--radius-sharp);
+    padding: 0.6rem 0.8rem;
+}
+
+@utility alert-success {
+    background-color: var(--color-success-wash);
+    border-color: var(--color-success-line);
+    color: var(--color-success);
+}
+
+@utility alert-error {
+    background-color: var(--color-danger-wash);
+    border-color: var(--color-danger-line);
+    color: var(--color-danger);
+}
+
+/* ------------------------------------------------------------------ base --
+ * Reglages globaux qui ne meritent pas un utilitaire.
+ */
+@layer base {
+    /* Le focus visible est dessine une fois pour tout le site : sans cela,
+       naviguer au clavier dans l'administration est impraticable. */
+    :focus-visible {
+        outline: 2px solid var(--color-accent);
+        outline-offset: 2px;
+    }
+
+    /* Les chiffres alignes rendent lisibles les colonnes de dates et d'ISBN. */
+    time, .tabular { font-variant-numeric: tabular-nums; }
+}

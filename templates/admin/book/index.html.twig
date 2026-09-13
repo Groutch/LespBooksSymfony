@@ -3,69 +3,70 @@
 {% block title %}Livres{% endblock %}
 
 {% block admin_content %}
-<div class="flex items-center justify-between gap-4">
-    <h1 class="text-xl font-semibold">Livres <span class="text-slate-400 font-normal">({{ total }})</span></h1>
-    <a href="{{ path('admin_book_new') }}" class="text-sm text-emerald-700 hover:underline">Ajouter sans scanner</a>
+<div class="flex flex-wrap items-baseline justify-between gap-4">
+    <h1 class="font-display text-2xl font-semibold tracking-tight">
+        Livres <span class="font-sans text-lg font-normal text-ink-faint tabular">({{ total }})</span>
+    </h1>
+    <a href="{{ path('admin_book_new') }}" class="text-sm text-accent hover:underline">Ajouter sans scanner</a>
 </div>
 
-<form method="get" class="mt-4 flex gap-2">
-    <input type="search" name="q" value="{{ criteria.query }}" placeholder="Titre, auteur, ISBN, éditeur…"
-           class="flex-1 rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
-    <button type="submit" class="rounded-lg bg-slate-800 px-4 py-2 font-medium text-white hover:bg-slate-900">Chercher</button>
+<form method="get" class="mt-5 flex max-w-2xl gap-2">
+    <label for="recherche-admin" class="sr-only">Rechercher un livre</label>
+    <input id="recherche-admin" type="search" name="q" value="{{ criteria.query }}" class="field"
+           placeholder="Titre, auteur, ISBN, éditeur…">
+    <button type="submit" class="btn btn-primary shrink-0">Chercher</button>
 </form>
 
 {% if total == 0 %}
-    <p class="mt-6 rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
-        Aucun livre. <a href="{{ path('admin_book_scan') }}" class="text-emerald-700 hover:underline">Scannez le premier</a>.
+    <p class="mt-6 rounded-xs border border-dashed border-line-field p-10 text-center text-ink-muted">
+        Aucun livre. <a href="{{ path('admin_book_scan') }}" class="text-accent hover:underline">Scannez le premier</a>.
     </p>
 {% else %}
-    <ul class="mt-4 divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+    <ul class="surface mt-5 divide-y divide-line">
         {% for book in books %}
             <li class="flex items-center gap-3 px-4 py-3">
                 {% if book.primaryImage and book.primaryImage.imageName %}
                     <img src="{{ vich_uploader_asset(book.primaryImage, 'imageFile') }}" alt=""
-                         class="h-14 w-10 shrink-0 rounded object-cover border border-slate-200">
+                         class="h-16 w-11 shrink-0 rounded-xs bg-surface-sunk object-cover shadow-cover">
                 {% else %}
-                    <div class="h-14 w-10 shrink-0 rounded bg-slate-100 border border-slate-200"></div>
+                    <div class="h-16 w-11 shrink-0 rounded-xs bg-surface-sunk shadow-cover"></div>
                 {% endif %}
 
                 <div class="min-w-0 flex-1">
                     <p class="truncate font-medium">{{ book.title }}</p>
-                    <p class="truncate text-sm text-slate-500">
+                    <p class="truncate text-sm text-ink-muted">
                         {{ book.authorNames|default('Auteur inconnu') }}
-                        {% if book.publishedYear %} · {{ book.publishedYear }}{% endif %}
+                        {% if book.publishedYear %} · <span class="tabular">{{ book.publishedYear }}</span>{% endif %}
                     </p>
                     {% if not book.available %}
-                        <span class="mt-1 inline-block rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
-                            Prêté à {{ book.activeLoan.borrowerName }}
-                        </span>
+                        {#- L'administration, elle, a le droit de nommer l'emprunteur. -#}
+                        <span class="chip chip-warn mt-1 text-xs">Prêté à {{ book.activeLoan.borrowerName }}</span>
                     {% endif %}
                 </div>
 
                 <div class="flex shrink-0 items-center gap-2">
                     {% if book.available %}
-                        <a href="{{ path('admin_loan_new', {id: book.id}) }}"
-                           class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50">Prêter</a>
+                        <a href="{{ path('admin_loan_new', {id: book.id}) }}" class="btn btn-ghost px-3 text-sm">Prêter</a>
                     {% else %}
                         <form method="post" action="{{ path('admin_loan_return', {id: book.activeLoan.id}) }}">
                             <input type="hidden" name="_token" value="{{ csrf_token('rendre-pret-' ~ book.activeLoan.id) }}">
-                            <button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50">Rendre</button>
+                            <button type="submit" class="btn btn-ghost px-3 text-sm">Rendre</button>
                         </form>
                     {% endif %}
-                    <a href="{{ path('admin_book_edit', {id: book.id}) }}"
-                       class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50">Modifier</a>
+                    <a href="{{ path('admin_book_edit', {id: book.id}) }}" class="btn btn-ghost px-3 text-sm">Modifier</a>
                 </div>
             </li>
         {% endfor %}
     </ul>
 
     {% if pageCount > 1 %}
-        <div class="mt-4 flex flex-wrap gap-1">
+        <nav class="mt-6 flex flex-wrap gap-1.5" aria-label="Pagination">
             {% for p in 1..pageCount %}
                 <a href="{{ path('admin_book_index', {q: criteria.query, page: p}) }}"
-                   class="rounded px-3 py-1.5 text-sm {{ p == criteria.page ? 'bg-slate-800 text-white' : 'border border-slate-300 hover:bg-slate-50' }}">{{ p }}</a>
+                   {{ p == criteria.page ? 'aria-current="page"' }}
+                   class="tabular rounded-xs px-3 py-2 text-sm {{ p == criteria.page ? 'bg-accent text-surface' : 'border border-line bg-surface hover:border-accent hover:text-accent' }}">{{ p }}</a>
             {% endfor %}
-        </div>
+        </nav>
     {% endif %}
 {% endif %}
 {% endblock %}

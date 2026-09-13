@@ -7,7 +7,6 @@
     "\/assets\/@symfony\/ux-turbo\/turbo_controller.js",
     "\/assets\/@symfony\/ux-turbo\/mercure_stream_source_element.js",
     "\/assets\/controllers\/barcode_scanner_controller.js",
-    "\/assets\/controllers\/hello_controller.js",
     "\/assets\/controllers\/isbn_autofill_controller.js",
     "@hotwired\/turbo"
 ]

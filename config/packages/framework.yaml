@@ -2,8 +2,27 @@
 framework:
     secret: '%env(APP_SECRET)%'
 
-    # Note that the session will be started ONLY if you read or write from it.
-    session: true
+    # Les sessions vivent dans le projet, et non dans le /tmp de PHP.
+    #
+    # Sur le mutualise OVH, /tmp est LOCAL A CHAQUE SERVEUR FRONTAL alors que le
+    # compte, lui, est partage entre eux. Deux requetes successives peuvent donc
+    # tomber sur deux frontaux differents : la seconde ne retrouve pas le fichier
+    # de session, et le benevole se voit brutalement deconnecte — au hasard d'une
+    # navigation, sans rapport avec son temps d'inactivite. S'y ajoutait un
+    # `gc_maxlifetime` a 1440, soit 24 minutes.
+    #
+    # `var/sessions` est sur le systeme de fichiers du compte : partage entre les
+    # frontaux, et hors d'atteinte du nettoyage mutualise de /tmp. Il est distinct
+    # de `var/cache`, que `cache:clear` efface a chaque livraison.
+    session:
+        # La session ne demarre que si on la lit ou l'ecrit.
+        enabled: true
+        save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
+        # Une journee : au-dela, c'est `remember_me` (7 jours) qui prend le relais.
+        gc_maxlifetime: 86400
+        # PHP est a 0 sur l'hebergement, donc rien ne nettoierait jamais ce dossier.
+        gc_probability: 1
+        gc_divisor: 100
 
     # Les API de métadonnées (Google Books surtout) renvoient par intermittence
     # des 429/503 transitoires. Une seule nouvelle tentative suffit à les absorber

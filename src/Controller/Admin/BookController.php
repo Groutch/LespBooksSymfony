@@ -196,6 +196,9 @@ class BookController extends AbstractController
             $this->applyUploadedCover($form, $book);
 
             $this->entityManager->flush();
+            // Après le flush : le DQL de deleteOrphans() ignore l'UnitOfWork.
+            $categoryRepository->deleteOrphans();
+
             $this->addFlash('success', 'Les modifications ont été enregistrées.');
 
             return $this->redirectToRoute('admin_book_index');
@@ -209,7 +212,7 @@ class BookController extends AbstractController
     }
 
     #[Route('/{id}/supprimer', name: 'admin_book_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
-    public function delete(Request $request, Book $book): Response
+    public function delete(Request $request, Book $book, CategoryRepository $categoryRepository): Response
     {
         if (!$this->isCsrfTokenValid('supprimer-livre-'.$book->getId(), $request->request->getString('_token'))) {
             throw $this->createAccessDeniedException('Jeton CSRF invalide.');
@@ -218,6 +221,7 @@ class BookController extends AbstractController
         $title = $book->getTitle();
         $this->entityManager->remove($book);
         $this->entityManager->flush();
+        $categoryRepository->deleteOrphans();
 
         $this->addFlash('success', \sprintf('« %s » a été supprimé.', $title));
 

@@ -24,7 +24,7 @@ class GenreType extends AbstractType
     {
         $builder->add('name', TextType::class, [
             'label' => 'Nom du rayon',
-            'help' => 'Le genre correspond à l\'endroit où le livre est rangé : Roman, Policier, Jeunesse, BD…',
+            'help' => 'Correspond à l\'endroit où le livre est rangé : Roman, Policier, Jeunesse, BD…',
         ]);
 
         // Priorite 10 : le slug doit exister avant que UniqueEntity ne le controle.

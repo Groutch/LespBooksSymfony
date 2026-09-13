@@ -6,7 +6,6 @@
 <div class="grid gap-4 sm:grid-cols-3">
     {% for tile in [
         {label: 'Livres', count: bookCount, href: path('admin_book_index'), action: 'Gérer les livres'},
-        {label: 'Catégories', count: categoryCount, href: path('admin_category_index'), action: 'Gérer les catégories'},
         {label: 'Prêts en cours', count: activeLoanCount, href: path('admin_loan_index'), action: 'Gérer les prêts'}
     ] %}
         <div class="surface p-4">

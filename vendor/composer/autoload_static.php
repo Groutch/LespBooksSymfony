@@ -164,8 +164,8 @@ class ComposerStaticInit7f5a3cfc8b17e20bec54c3aae7c565fa
         'phpDocumentor\\Reflection\\' => 
         array (
             0 => __DIR__ . '/..' . '/phpdocumentor/reflection-common/src',
-            1 => __DIR__ . '/..' . '/phpdocumentor/type-resolver/src',
-            2 => __DIR__ . '/..' . '/phpdocumentor/reflection-docblock/src',
+            1 => __DIR__ . '/..' . '/phpdocumentor/reflection-docblock/src',
+            2 => __DIR__ . '/..' . '/phpdocumentor/type-resolver/src',
         ),
         'Webmozart\\Assert\\' => 
         array (
@@ -561,7 +561,6 @@ class ComposerStaticInit7f5a3cfc8b17e20bec54c3aae7c565fa
         'App\\Command\\CreateUserCommand' => __DIR__ . '/../..' . '/src/Command/CreateUserCommand.php',
         'App\\Command\\IsbnLookupCommand' => __DIR__ . '/../..' . '/src/Command/IsbnLookupCommand.php',
         'App\\Controller\\Admin\\BookController' => __DIR__ . '/../..' . '/src/Controller/Admin/BookController.php',
-        'App\\Controller\\Admin\\CategoryController' => __DIR__ . '/../..' . '/src/Controller/Admin/CategoryController.php',
         'App\\Controller\\Admin\\DashboardController' => __DIR__ . '/../..' . '/src/Controller/Admin/DashboardController.php',
         'App\\Controller\\Admin\\GenreController' => __DIR__ . '/../..' . '/src/Controller/Admin/GenreController.php',
         'App\\Controller\\Admin\\LoanController' => __DIR__ . '/../..' . '/src/Controller/Admin/LoanController.php',
@@ -576,7 +575,6 @@ class ComposerStaticInit7f5a3cfc8b17e20bec54c3aae7c565fa
         'App\\Entity\\Loan' => __DIR__ . '/../..' . '/src/Entity/Loan.php',
         'App\\Entity\\User' => __DIR__ . '/../..' . '/src/Entity/User.php',
         'App\\Form\\BookType' => __DIR__ . '/../..' . '/src/Form/BookType.php',
-        'App\\Form\\CategoryType' => __DIR__ . '/../..' . '/src/Form/CategoryType.php',
         'App\\Form\\GenreType' => __DIR__ . '/../..' . '/src/Form/GenreType.php',
         'App\\Form\\LoanType' => __DIR__ . '/../..' . '/src/Form/LoanType.php',
         'App\\Kernel' => __DIR__ . '/../..' . '/src/Kernel.php',
@@ -590,7 +588,6 @@ class ComposerStaticInit7f5a3cfc8b17e20bec54c3aae7c565fa
         'App\\Repository\\UserRepository' => __DIR__ . '/../..' . '/src/Repository/UserRepository.php',
         'App\\Service\\Catalog\\AuthorResolver' => __DIR__ . '/../..' . '/src/Service/Catalog/AuthorResolver.php',
         'App\\Service\\Catalog\\BookImporter' => __DIR__ . '/../..' . '/src/Service/Catalog/BookImporter.php',
-        'App\\Service\\Catalog\\CategoryMerger' => __DIR__ . '/../..' . '/src/Service/Catalog/CategoryMerger.php',
         'App\\Service\\Catalog\\CategoryResolver' => __DIR__ . '/../..' . '/src/Service/Catalog/CategoryResolver.php',
         'App\\Service\\Catalog\\CoverDownloader' => __DIR__ . '/../..' . '/src/Service/Catalog/CoverDownloader.php',
         'App\\Service\\IsbnNormalizer' => __DIR__ . '/../..' . '/src/Service/IsbnNormalizer.php',

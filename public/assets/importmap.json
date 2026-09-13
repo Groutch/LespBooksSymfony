@@ -8,7 +8,7 @@
         "type": "js"
     },
     "\/assets\/@symfony\/stimulus-bundle\/controllers.js": {
-        "path": "\/assets\/@symfony\/stimulus-bundle\/controllers-Wu4NWOq.js",
+        "path": "\/assets\/@symfony\/stimulus-bundle\/controllers--X9ZmeZ.js",
         "type": "js"
     },
     "\/assets\/@symfony\/ux-turbo\/turbo_controller.js": {
@@ -27,12 +27,16 @@
         "path": "\/assets\/controllers\/isbn_autofill_controller-qqCnUHU.js",
         "type": "js"
     },
+    "\/assets\/controllers\/pwa_install_controller.js": {
+        "path": "\/assets\/controllers\/pwa_install_controller-C5XqaXs.js",
+        "type": "js"
+    },
     "\/assets\/controllers\/csrf_protection_controller.js": {
         "path": "\/assets\/controllers\/csrf_protection_controller-6ynUAeX.js",
         "type": "js"
     },
     "\/assets\/styles\/app.css": {
-        "path": "\/assets\/styles\/app-CLcsaEG.css",
+        "path": "\/assets\/styles\/app-Xi_wJJE.css",
         "type": "css"
     },
     "@hotwired\/stimulus": {

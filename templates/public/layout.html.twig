@@ -7,9 +7,24 @@
             <a href="{{ path('home') }}" class="font-display text-lg font-semibold tracking-tight">
                 Bibliothèque de Lespouey
             </a>
-            <nav class="flex items-center gap-5 text-sm">
+            <nav class="flex items-center gap-4 text-sm sm:gap-5">
                 <a href="{{ path('catalog_index') }}" class="text-ink-muted hover:text-accent">Rechercher un livre</a>
-                <a href="{{ path('app_login') }}" class="text-ink-muted hover:text-accent">Espace bénévoles</a>
+
+                {#- Quitter l'administration et se deconnecter menent tous deux ici :
+                    sans repere, impossible de savoir si la session est encore ouverte.
+                    Sur un telephone partage entre benevoles, c'est ce qui fait qu'on
+                    repart en croyant etre sorti. -#}
+                {% if app.user %}
+                    <a href="{{ path('admin_dashboard') }}"
+                       class="chip hover:border-accent hover:text-accent"
+                       title="Vous êtes connecté — retourner à l'administration">
+                        <span class="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>
+                        <span class="sm:hidden">Connecté</span>
+                        <span class="hidden sm:inline">Connecté&nbsp;: {{ app.user.displayName|default('bénévole') }}</span>
+                    </a>
+                {% else %}
+                    <a href="{{ path('app_login') }}" class="text-ink-muted hover:text-accent">Espace bénévoles</a>
+                {% endif %}
             </nav>
         </div>
     </header>

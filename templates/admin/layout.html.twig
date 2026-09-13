@@ -41,15 +41,12 @@
 
                 <span class="mx-1 h-4 w-px shrink-0 bg-line" aria-hidden="true"></span>
 
-                {#- Les deux liens menaient visuellement au meme endroit : la deconnexion
-                    redirige elle aussi vers l'accueil (security.yaml, target: home). Rien
-                    ne distinguait « regarder le catalogue » de « fermer sa session », ce qui
-                    fait perdre sa session a qui voulait la garder, et l'inverse — genant sur
-                    un telephone partage entre benevoles. Le catalogue s'ouvre donc dans un
-                    onglet a part, et la deconnexion dit ce qu'elle fait. -#}
-                <a href="{{ path('home') }}" target="_blank" rel="noopener"
-                   class="shrink-0 px-2.5 py-1.5 whitespace-nowrap text-ink-muted hover:text-accent">
-                    Voir le catalogue <span class="text-xs" aria-hidden="true">↗</span>
+                {#- Ces deux liens aboutissent a la meme page : la deconnexion redirige
+                    elle aussi vers l'accueil (security.yaml, target: home). Ce qui les
+                    distingue se lit donc la-bas, ou l'en-tete public affiche une pastille
+                    tant que la session est ouverte. -#}
+                <a href="{{ path('home') }}" class="shrink-0 px-2.5 py-1.5 whitespace-nowrap text-ink-muted hover:text-accent">
+                    Voir le site
                 </a>
                 <a href="{{ path('app_logout') }}" class="shrink-0 px-2.5 py-1.5 whitespace-nowrap text-ink-muted hover:text-accent">
                     Se déconnecter

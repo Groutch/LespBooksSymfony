@@ -26,4 +26,6 @@
 /.deploy.local
 # Maquettes de travail du compagnon visuel de brainstorming.
 /.superpowers/
+# Notes de reprise : document de travail local, hors du depot.
+/NOTES-REPRISE.md
 ###< app ###

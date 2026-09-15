@@ -7,13 +7,14 @@ import { Controller } from '@hotwired/stimulus';
  * Safari/iOS ne l'implemente pas, d'ou le repli sur ZXing.
  */
 export default class extends Controller {
-    static targets = ['video', 'status', 'manual'];
+    static targets = ['video', 'status', 'statusText', 'spinner', 'manual', 'confirmation', 'detected'];
     static values = { checkUrl: String, newUrl: String };
 
     connect() {
         this.stream = null;
         this.zxingControls = null;
         this.stopped = false;
+        this.detectedAt = null;
     }
 
     disconnect() {
@@ -22,6 +23,9 @@ export default class extends Controller {
 
     async start() {
         this.stopped = false;
+        this.detectedAt = null;
+        this.hideConfirmation();
+        this.setSpinner(false);
         this.setStatus('Activation de la caméra…');
 
         try {
@@ -81,8 +85,55 @@ export default class extends Controller {
 
     handleCode(rawValue) {
         this.stop();
-        this.setStatus(`Code détecté : ${rawValue}…`);
+        this.detectedAt = Date.now();
+
+        // Un retour haptique confirme la lecture sans obliger a fixer l'ecran : on
+        // scanne une etagere le bras tendu. Safari/iOS ne l'expose pas, l'animation
+        // y reste le seul signal.
+        if (typeof navigator.vibrate === 'function') {
+            navigator.vibrate(60);
+        }
+
+        this.showConfirmation(rawValue);
         this.lookup(rawValue);
+    }
+
+    showConfirmation(rawValue) {
+        if (this.hasDetectedTarget) {
+            this.detectedTarget.textContent = rawValue;
+        }
+
+        this.videoTarget.classList.add('hidden');
+
+        if (!this.hasConfirmationTarget) return;
+
+        // `hidden` et `flex` se disputent la propriete display : on ne les laisse
+        // jamais coexister, sinon l'ordre du CSS compile tranche a notre place.
+        this.confirmationTarget.classList.remove('hidden');
+        this.confirmationTarget.classList.add('flex');
+    }
+
+    hideConfirmation() {
+        if (!this.hasConfirmationTarget) return;
+
+        this.confirmationTarget.classList.remove('flex');
+        this.confirmationTarget.classList.add('hidden');
+    }
+
+    /**
+     * Le controle en base repond en quelques millisecondes : sans ce plancher, la
+     * confirmation de lecture n'existerait que le temps d'un clignotement, et le
+     * benevole conclurait que le scan a echoue. L'attente reseau s'impute dessus,
+     * elle n'est donc payee que lorsque la reponse arrive plus vite que l'oeil.
+     */
+    async holdConfirmation() {
+        if (this.detectedAt === null) return;
+
+        const reste = 700 - (Date.now() - this.detectedAt);
+
+        if (reste > 0) {
+            await new Promise((resolve) => setTimeout(resolve, reste));
+        }
     }
 
     submitManual(event) {
@@ -102,6 +153,8 @@ export default class extends Controller {
      */
     async lookup(isbn) {
         const cleaned = isbn.replace(/[^0-9Xx]/g, '');
+        this.setStatus('Recherche du livre…');
+        this.setSpinner(true);
 
         try {
             const response = await fetch(this.checkUrlValue.replace('0000000000000', cleaned), {
@@ -109,7 +162,7 @@ export default class extends Controller {
             });
 
             if (!response.ok) {
-                this.setStatus("Ce code ne correspond pas à un ISBN de livre valide.", true);
+                this.failed("Ce code ne correspond pas à un ISBN de livre valide.");
                 return;
             }
 
@@ -117,16 +170,33 @@ export default class extends Controller {
 
             if (data.existing) {
                 this.setStatus(`Déjà au catalogue : « ${data.existing.title} ». Ouverture de sa fiche…`);
+                await this.holdConfirmation();
                 window.location.href = data.existing.url;
                 return;
             }
 
+            await this.holdConfirmation();
             window.location.href = `${this.newUrlValue}?isbn=${encodeURIComponent(data.isbn13 ?? cleaned)}`;
         } catch (error) {
-            this.setStatus('Vérification impossible. Vérifiez la connexion réseau.', true);
+            this.failed('Vérification impossible. Vérifiez la connexion réseau.');
         }
     }
 
+    /**
+     * Un echec rend la main : la confirmation verte disparait, sinon elle
+     * contredirait le message d'erreur affiche juste en dessous.
+     */
+    failed(message) {
+        this.hideConfirmation();
+        this.setSpinner(false);
+        this.detectedAt = null;
+        this.setStatus(message, true);
+    }
+
+    /**
+     * Couper le flux ne vide pas l'element : il conserve sa derniere frame et
+     * restait affiche en cadre noir. Il faut le masquer et lui retirer sa source.
+     */
     stop() {
         this.stopped = true;
 
@@ -139,11 +209,37 @@ export default class extends Controller {
             this.stream.getTracks().forEach((track) => track.stop());
             this.stream = null;
         }
+
+        if (this.hasVideoTarget) {
+            this.videoTarget.srcObject = null;
+            this.videoTarget.classList.add('hidden');
+        }
+    }
+
+    /**
+     * L'arret demande par le benevole, par opposition a l'arret technique que
+     * declenchent une lecture reussie ou le demontage du controleur : lui seul
+     * doit dire ce qui vient de se passer.
+     */
+    stopManually() {
+        this.stop();
+        this.hideConfirmation();
+        this.setSpinner(false);
+        this.detectedAt = null;
+        this.setStatus("Caméra arrêtée. Réactivez-la, ou saisissez l'ISBN à la main.");
     }
 
     setStatus(message, isError = false) {
-        this.statusTarget.textContent = message;
+        if (!this.hasStatusTextTarget) return;
+
+        this.statusTextTarget.textContent = message;
         this.statusTarget.classList.toggle('text-danger', isError);
         this.statusTarget.classList.toggle('text-ink-muted', !isError);
+    }
+
+    setSpinner(visible) {
+        if (!this.hasSpinnerTarget) return;
+
+        this.spinnerTarget.classList.toggle('hidden', !visible);
     }
 }

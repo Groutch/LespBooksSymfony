@@ -20,11 +20,11 @@
         "type": "js"
     },
     "\/assets\/controllers\/barcode_scanner_controller.js": {
-        "path": "\/assets\/controllers\/barcode_scanner_controller-gB673bg.js",
+        "path": "\/assets\/controllers\/barcode_scanner_controller-4Cys7_Z.js",
         "type": "js"
     },
     "\/assets\/controllers\/isbn_autofill_controller.js": {
-        "path": "\/assets\/controllers\/isbn_autofill_controller-qqCnUHU.js",
+        "path": "\/assets\/controllers\/isbn_autofill_controller-I1CWm6t.js",
         "type": "js"
     },
     "\/assets\/controllers\/pwa_install_controller.js": {
@@ -36,7 +36,7 @@
         "type": "js"
     },
     "\/assets\/styles\/app.css": {
-        "path": "\/assets\/styles\/app-Xi_wJJE.css",
+        "path": "\/assets\/styles\/app-3FEqDg_.css",
         "type": "css"
     },
     "@hotwired\/stimulus": {

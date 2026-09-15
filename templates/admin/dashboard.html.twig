@@ -3,6 +3,14 @@
 {% block title %}Tableau de bord{% endblock %}
 
 {% block admin_content %}
+{#- Le manifeste ouvre l'application installee sur cette page : elle doit dire ou
+    l'on se trouve avant d'aligner des chiffres. Le site public porte son titre en
+    tete, l'administration n'en avait aucun. -#}
+<div class="mb-6">
+    <h1 class="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Bibliothèque de Lespouey</h1>
+    <p class="mt-1 text-ink-muted">Gestion du catalogue, des rayons et des prêts.</p>
+</div>
+
 <div class="grid gap-4 sm:grid-cols-3">
     {% for tile in [
         {label: 'Livres', count: bookCount, href: path('admin_book_index'), action: 'Gérer les livres'},

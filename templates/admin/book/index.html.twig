@@ -24,7 +24,7 @@
 {% else %}
     <ul class="surface mt-5 divide-y divide-line">
         {% for book in books %}
-            <li class="flex items-center gap-3 px-4 py-3">
+            <li class="flex flex-wrap items-center gap-3 px-4 py-3">
                 {% if book.primaryImage and book.primaryImage.imageName %}
                     <img src="{{ vich_uploader_asset(book.primaryImage, 'imageFile') }}" alt=""
                          class="h-16 w-11 shrink-0 rounded-xs bg-surface-sunk object-cover shadow-cover">
@@ -44,7 +44,11 @@
                     {% endif %}
                 </div>
 
-                <div class="flex shrink-0 items-center gap-2">
+                {#- Sur telephone les deux actions passent sous le titre : cote a cote
+                    elles gelaient 180 px et ne laissaient qu'une centaine de pixels au
+                    titre, tronque des le troisieme mot. La ligne gagne en hauteur, mais
+                    le nom du livre est la seule chose qu'on cherche dans cette liste. -#}
+                <div class="flex w-full shrink-0 items-center justify-end gap-2 sm:w-auto sm:justify-start">
                     {% if book.available %}
                         <a href="{{ path('admin_loan_new', {id: book.id}) }}" class="btn btn-ghost px-3 text-sm">Prêter</a>
                     {% else %}

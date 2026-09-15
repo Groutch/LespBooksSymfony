@@ -6,9 +6,19 @@ import { Controller } from '@hotwired/stimulus';
  * Le formulaire est affiche immediatement et rempli quand les sources externes
  * repondent (2 a 12 s) : la saisie n'est jamais bloquee par l'attente reseau.
  */
+/**
+ * Les trois etats du bandeau. Ils reutilisent le composant `alert` plutot que d'en
+ * inventer un sixieme : seule la peinture change d'un etat a l'autre.
+ */
+const ETATS = {
+    encours: 'border-accent-wash bg-accent-wash text-accent',
+    trouve: 'alert-success',
+    echec: 'alert-error',
+};
+
 export default class extends Controller {
     static values = { lookupUrl: String, isbn: String };
-    static targets = ['status', 'coverUrl', 'coverPreview'];
+    static targets = ['status', 'statusText', 'spinner', 'coverUrl', 'coverPreview'];
 
     connect() {
         if (this.hasIsbnValue && this.isbnValue !== '') {
@@ -17,7 +27,7 @@ export default class extends Controller {
     }
 
     async fetchMetadata(isbn) {
-        this.setStatus('Recherche des informations du livre…');
+        this.setStatus('Recherche des informations du livre…', 'encours');
 
         try {
             const response = await fetch(this.lookupUrlValue.replace('0000000000000', isbn), {
@@ -25,7 +35,7 @@ export default class extends Controller {
             });
 
             if (!response.ok) {
-                this.setStatus("ISBN invalide : remplissez le formulaire à la main.", true);
+                this.setStatus("ISBN invalide : remplissez le formulaire à la main.", 'echec');
                 return;
             }
 
@@ -33,14 +43,14 @@ export default class extends Controller {
 
             if (!data.found || !data.book) {
                 this.fill('isbn13', data.isbn13 ?? isbn);
-                this.setStatus("Aucune source ne connaît cet ISBN : saisie manuelle nécessaire.", true);
+                this.setStatus("Aucune source ne connaît cet ISBN : saisie manuelle nécessaire.", 'echec');
                 return;
             }
 
             this.applyBook(data.book, data.isbn13 ?? isbn);
-            this.setStatus(`Informations trouvées via ${data.book.sources.join(', ')}. Vérifiez avant d'enregistrer.`);
+            this.setStatus(`Informations trouvées via ${data.book.sources.join(', ')}. Vérifiez avant d'enregistrer.`, 'trouve');
         } catch (error) {
-            this.setStatus('Recherche impossible. Vérifiez la connexion réseau.', true);
+            this.setStatus('Recherche impossible. Vérifiez la connexion réseau.', 'echec');
         }
     }
 
@@ -82,11 +92,18 @@ export default class extends Controller {
         }
     }
 
-    setStatus(message, isError = false) {
+    setStatus(message, etat = 'trouve') {
         if (!this.hasStatusTarget) return;
 
-        this.statusTarget.textContent = message;
-        this.statusTarget.classList.toggle('text-danger', isError);
-        this.statusTarget.classList.toggle('text-ink-muted', !isError);
+        this.statusTextTarget.textContent = message;
+
+        Object.values(ETATS).forEach((classes) => this.statusTarget.classList.remove(...classes.split(' ')));
+        this.statusTarget.classList.add(...ETATS[etat].split(' '));
+
+        // Le sablier ne tourne que pendant l'attente : le laisser sur un resultat
+        // ferait croire que la recherche continue.
+        if (this.hasSpinnerTarget) {
+            this.spinnerTarget.classList.toggle('hidden', etat !== 'encours');
+        }
     }
 }

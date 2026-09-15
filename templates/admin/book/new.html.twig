@@ -14,8 +14,15 @@
     </div>
 
     {% if prefillIsbn %}
-        <p data-isbn-autofill-target="status" class="mt-4 rounded-xs bg-surface-sunk px-3 py-2 text-sm text-ink-muted">
-            Recherche des informations du livre…
+        {#- Les trois sources repondent en 2 a 12 s. Le message discret d'avant se
+            confondait avec les libelles du formulaire : le benevole voyait un
+            formulaire vide et croyait le scan perdu. L'accent sur son halo donne
+            6,32:1, au-dessus du seuil AA. -#}
+        <p data-isbn-autofill-target="status" role="status"
+           class="alert mt-4 flex items-center gap-3 border-accent-wash bg-accent-wash text-sm text-accent">
+            <span data-isbn-autofill-target="spinner" aria-hidden="true"
+                  class="size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent motion-reduce:animate-none"></span>
+            <span data-isbn-autofill-target="statusText">Recherche des informations du livre…</span>
         </p>
     {% endif %}
 

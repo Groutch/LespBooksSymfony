@@ -2,6 +2,31 @@
 
 {% block title %}{{ book.title }}{% endblock %}
 
+{#- Les moteurs coupent vers 160 caracteres. La description vient des sources
+    externes, retours a la ligne et parfois balises compris : on la remet a plat. -#}
+{%- block description -%}
+    {%- set resume = book.description|default('')|striptags|replace({"\r": ' ', "\n": ' ', "\t": ' '})|split(' ')|filter(mot => mot != '')|join(' ') -%}
+    {%- if resume is not empty -%}
+        {{ resume|length > 160 ? resume|slice(0, 159)|trim ~ '…' : resume }}
+    {%- else -%}
+        « {{ book.title }} »{{ book.authors is not empty ? ', ' ~ book.authorNames }} : à emprunter à la bibliothèque communautaire de Lespouey.
+    {%- endif -%}
+{%- endblock -%}
+
+{% block og_type %}book{% endblock %}
+
+{#- La couverture est l'apercu naturel d'un livre partage. Elle est en portrait :
+    la carte « summary » l'affiche entiere, la grande carte la rognerait. -#}
+{% block og_image %}
+    {%- if book.primaryImage and book.primaryImage.imageName -%}
+        <meta property="og:image" content="{{ absolute_url(vich_uploader_asset(book.primaryImage, 'imageFile')) }}">
+        <meta property="og:image:alt" content="Couverture de {{ book.title }}">
+        <meta name="twitter:card" content="summary">
+    {%- else -%}
+        {{ parent() }}
+    {%- endif -%}
+{% endblock %}
+
 {% block public_content %}
 <a href="{{ path('catalog_index') }}" class="text-sm text-ink-muted hover:text-accent">← Retour à la recherche</a>
 

@@ -25,6 +25,9 @@ Ouvert à tous, sans compte.
   thèmes, description, éditeur, année, pages, langue, ISBN. La disponibilité s'affiche
   (« Disponible », ou « Emprunté » avec la date de retour prévue), mais **jamais le nom de
   l'emprunteur**.
+- **Partage et référencement** : chaque page a son titre et sa description. Un lien partagé
+  (Facebook, WhatsApp…) affiche un aperçu : la couverture pour un livre, l'image du site sinon.
+  Les erreurs 404, 403 et 500 ont leurs propres pages, aux couleurs du site.
 
 ### L'espace bénévoles : `/admin`
 
@@ -189,13 +192,15 @@ assets/
   controllers/              contrôleurs Stimulus : scanner, remplissage ISBN, installation PWA
   styles/app.css            TOUTE l'identité visuelle : polices, jetons, 5 composants
   fonts/                    Fraunces et Inter en woff2, sous-ensembles latin et latin-ext
+  images/partage.png        aperçu des liens partagés (1200×630)
 config/                     configuration Symfony (sessions, sécurité, http_client…)
 deploy/                     build.sh, release.sh, migrate.sh : livraison vers OVH
 docker/                     image PHP 8.4 + Apache, php.ini, création de la base de test
 migrations/                 migrations Doctrine
 public/
+  favicon.ico, robots.txt   servis tels quels par Apache
   sw.js                     service worker (hors AssetMapper, à URL stable)
-  pwa/                      manifeste et icônes de l'application installée
+  pwa/                      manifeste et icônes de l'application installée (aussi celles du site)
   uploads/books/            couvertures téléversées (données, non versionnées)
 src/
   Command/                  app:user:create, app:isbn:lookup
@@ -213,6 +218,7 @@ templates/
   base.html.twig            squelette commun
   public/, home/, catalog/  site public
   admin/                    espace bénévoles
+  bundles/TwigBundle/Exception/  pages d'erreur 404, 403 et générique
   form/theme.html.twig      thème de tous les formulaires Symfony
 tests/                      PHPUnit, sur une vraie base MySQL `app_test`
 ```
@@ -372,6 +378,24 @@ jetons. C'est le seul fichier à toucher pour réaccorder le site.
   `form_div_layout.html.twig`. Il n'y a pas de `file_widget`, et un `parent()` sur ce bloc casse
   toutes les pages qui portent un champ fichier.
 
+### Titres, descriptions, aperçus de partage
+
+Tout se règle par des blocs de [templates/base.html.twig](templates/base.html.twig) :
+
+| Bloc | Rôle |
+|---|---|
+| `title` | Le nom de **la page seule**. ` · Bibliothèque de Lespouey` est ajouté par `title_suffix`, que l'accueil vide. |
+| `description` | Balise `description` et `og:description`. Le texte par défaut convient à l'accueil. La fiche d'un livre reprend le début de sa description, remise à plat et coupée à 160 caractères. |
+| `og_type`, `og_image` | Aperçu de partage. La fiche d'un livre passe en `book` et propose sa couverture. Sans couverture, c'est `assets/images/partage.png`, en URL absolue. |
+
+- La gestion et la page de connexion portent `noindex`, et `public/robots.txt` écarte `/admin`,
+  `/connexion` et `/deconnexion`.
+- Les pages d'erreur (`templates/bundles/TwigBundle/Exception/`) ne s'affichent **qu'en
+  production** : en développement, Symfony montre sa page de diagnostic. Pour les voir, ouvrir
+  `/_error/404`, `/_error/403` ou `/_error/500`.
+- `assets/images/partage.png` et `public/favicon.ico` sont tirés de l'icône de la PWA. Pour les
+  régénérer, reprendre `public/pwa/icons/icon-512.png`, avec les polices du site pour le texte.
+
 ### Application installable (PWA)
 
 - `public/sw.js` vit **à la racine**, et le manifeste dans `public/pwa/`. Un dossier
@@ -433,8 +457,11 @@ php bin/phpunit --filter testABookCannotBeLentTwiceAtTheSameTime tests/Controlle
 - Un formulaire invalide réaffiché répond **422**, pas 200.
 - Les tests s'appuient surtout sur les **textes** (libellés de boutons, contenu de la page), et
   peu sur le balisage. Quelques points de balisage sont tout de même vérifiés : une carte du
-  catalogue est un `<article>`, et les balises PWA (`manifest`, `apple-touch-icon`, `theme-color`)
-  n'apparaissent que dans la mise en page de la gestion.
+  catalogue est un `<article>`, le manifeste PWA et le `theme-color` sienne n'apparaissent que dans
+  la mise en page de la gestion, et les balises `title`, `description`, `og:*` et `robots` sont
+  contrôlées par `PageMetadataTest`.
+- Les pages d'erreur sont testées par l'aperçu `/_error/{code}`, ouvert aussi en environnement de
+  test, car les tests tournent en mode debug.
 
 ---
 

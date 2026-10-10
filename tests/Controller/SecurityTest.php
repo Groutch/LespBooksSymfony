@@ -61,5 +61,10 @@ class SecurityTest extends AdminWebTestCase
         ]));
 
         self::assertResponseRedirects('/connexion');
+
+        // Message fourni par Symfony : il sortait en anglais tant que la locale
+        // par defaut etait `en`, au milieu d'une interface toute en francais.
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('.alert-error', 'Identifiants invalides.');
     }
 }

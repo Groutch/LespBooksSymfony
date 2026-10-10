@@ -1,5 +1,8 @@
 framework:
-    default_locale: en
+    # Le site est entierement francais. En `en`, les messages fournis par Symfony
+    # (« Invalid credentials. » a la connexion, contraintes de validation sans
+    # message propre) sortaient en anglais au milieu de l'interface.
+    default_locale: fr
     translator:
         default_path: '%kernel.project_dir%/translations'
         providers:

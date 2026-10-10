@@ -2,3 +2,11 @@ when@dev:
     _errors:
         resource: '@FrameworkBundle/Resources/config/routing/errors.php'
         prefix: /_error
+
+# Les pages d'erreur du site ne s'affichent qu'hors mode debug, alors que les
+# tests tournent en debug : cet apercu est le seul moyen de les rendre telles
+# que la production les servira (ErrorPageTest).
+when@test:
+    _errors:
+        resource: '@FrameworkBundle/Resources/config/routing/errors.php'
+        prefix: /_error

@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% import 'public/_bibliotheque.html.twig' as biblio %}
 
 {% block body %}
 <div class="flex min-h-screen flex-col">
@@ -17,7 +18,11 @@
                        class="rounded-xs bg-paper px-2.5 py-1 font-medium text-ink hover:bg-surface">
                         Gestion
                     </a>
-                    <a href="{{ path('app_logout') }}" class="text-line hover:text-paper">Se déconnecter</a>
+                    {#- Formulaire et non lien : voir security.yaml (prechargement Turbo). -#}
+                    <form method="post" action="{{ path('app_logout') }}">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+                        <button type="submit" class="cursor-pointer text-line hover:text-paper">Se déconnecter</button>
+                    </form>
                 </span>
             </div>
         </div>
@@ -28,8 +33,10 @@
             <a href="{{ path('home') }}" class="font-display text-lg font-semibold tracking-tight">
                 Bibliothèque de Lespouey
             </a>
-            <nav class="flex items-center gap-4 text-sm sm:gap-5">
+            {#- Trois liens ne tiennent plus sur une ligne de 360 px : ils passent a la ligne. -#}
+            <nav class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm sm:gap-x-5">
                 <a href="{{ path('catalog_index') }}" class="text-ink-muted hover:text-accent">Rechercher un livre</a>
+                <a href="{{ path('practical_info') }}" class="text-ink-muted hover:text-accent">Infos pratiques</a>
 
                 {#- Inutile quand la session est ouverte : le bandeau du dessus porte
                     deja l'acces a l'administration et la deconnexion. -#}
@@ -44,9 +51,23 @@
         {% block public_content %}{% endblock %}
     </main>
 
+    {#- Ou et quand venir, sur chaque page : c'est la premiere question d'un
+        habitant, avant meme celle d'un titre. -#}
     <footer class="border-t border-line bg-surface">
-        <div class="mx-auto max-w-6xl px-5 py-6 text-sm text-ink-muted">
-            Bibliothèque communautaire de Lespouey.
+        <div class="mx-auto flex max-w-6xl flex-wrap justify-between gap-x-10 gap-y-5 px-5 py-8 text-sm text-ink-muted">
+            <div>
+                <p class="font-medium text-ink">Bibliothèque communautaire de Lespouey</p>
+                <address class="mt-1 not-italic">{{ bibliotheque.adresse|join(', ') }}</address>
+                <p class="mt-1">Ouverte {{ biblio.horaires_en_phrase(bibliotheque.horaires) }}.</p>
+                <p class="mt-1">
+                    <a href="mailto:{{ bibliotheque.courriel }}" class="underline underline-offset-2 hover:text-accent">{{ bibliotheque.courriel }}</a>
+                </p>
+            </div>
+            <nav class="flex flex-wrap items-start gap-x-5" aria-label="À propos du site">
+                <a href="{{ path('practical_info') }}" class="py-1 hover:text-accent">Infos pratiques</a>
+                <a href="{{ path('legal_notice') }}" class="py-1 hover:text-accent">Mentions légales</a>
+                <a href="{{ path('privacy_policy') }}" class="py-1 hover:text-accent">Confidentialité</a>
+            </nav>
         </div>
     </footer>
 </div>

@@ -10,16 +10,16 @@
     <a href="{{ path('admin_book_new') }}" class="text-sm text-accent hover:underline">Ajouter sans scanner</a>
 </div>
 
-<form method="get" class="mt-5 flex max-w-2xl gap-2">
-    <label for="recherche-admin" class="sr-only">Rechercher un livre</label>
-    <input id="recherche-admin" type="search" name="q" value="{{ criteria.query }}" class="field"
-           placeholder="Titre, auteur, ISBN, éditeur…">
-    <button type="submit" class="btn btn-primary shrink-0">Chercher</button>
-</form>
+{#- Le meme formulaire que le catalogue public, filtres par rayon compris. -#}
+{{ include('catalog/_recherche.html.twig', {route: 'admin_book_index'}) }}
 
 {% if total == 0 %}
     <p class="mt-6 rounded-xs border border-dashed border-line-field p-10 text-center text-ink-muted">
-        Aucun livre. <a href="{{ path('admin_book_scan') }}" class="text-accent hover:underline">Scannez le premier</a>.
+        {% if criteria.hasFilters %}
+            Aucun livre ne correspond à cette recherche.
+        {% else %}
+            Aucun livre. <a href="{{ path('admin_book_scan') }}" class="text-accent hover:underline">Scannez le premier</a>.
+        {% endif %}
     </p>
 {% else %}
     <ul class="surface mt-5 divide-y divide-line">
@@ -33,11 +33,20 @@
                 {% endif %}
 
                 <div class="min-w-0 flex-1">
-                    <p class="truncate font-medium">{{ book.title }}</p>
+                    <a href="{{ path('admin_book_show', {id: book.id}) }}" class="block truncate font-medium hover:text-accent">{{ book.title }}</a>
                     <p class="truncate text-sm text-ink-muted">
                         {{ book.authorNames|default('Auteur inconnu') }}
                         {% if book.publishedYear %} · <span class="tabular">{{ book.publishedYear }}</span>{% endif %}
                     </p>
+                    {#- Ou le ranger, ou aller le chercher : c'est ce qu'on vient voir
+                        quand on filtre par rayon. -#}
+                    {% if book.genre or book.shelfLocation %}
+                        <p class="truncate text-xs text-ink-faint">
+                            {{- book.genre ? 'Rayon ' ~ book.genre.name -}}
+                            {{- book.genre and book.shelfLocation ? ' · ' -}}
+                            {{- book.shelfLocation -}}
+                        </p>
+                    {% endif %}
                     {% if not book.available %}
                         {#- L'administration, elle, a le droit de nommer l'emprunteur. -#}
                         <span class="chip chip-warn mt-1 text-xs">Prêté à {{ book.activeLoan.borrowerName }}</span>
@@ -54,6 +63,8 @@
                     {% else %}
                         <form method="post" action="{{ path('admin_loan_return', {id: book.activeLoan.id}) }}">
                             <input type="hidden" name="_token" value="{{ csrf_token('rendre-pret-' ~ book.activeLoan.id) }}">
+                            {#- On reste sur la liste, filtres compris (LoanController::redirectBack()). -#}
+                            <input type="hidden" name="retour" value="{{ app.request.requestUri }}">
                             <button type="submit" class="btn btn-ghost px-3 text-sm">Rendre</button>
                         </form>
                     {% endif %}
@@ -66,7 +77,8 @@
     {% if pageCount > 1 %}
         <nav class="mt-6 flex flex-wrap gap-1.5" aria-label="Pagination">
             {% for p in 1..pageCount %}
-                <a href="{{ path('admin_book_index', {q: criteria.query, page: p}) }}"
+                {#- La query string entiere : changer de page ne perd plus les filtres. -#}
+                <a href="{{ path('admin_book_index', app.request.query.all|merge({page: p})) }}"
                    {{ p == criteria.page ? 'aria-current="page"' }}
                    class="tabular rounded-xs px-3 py-2 text-sm {{ p == criteria.page ? 'bg-accent text-surface' : 'border border-line bg-surface hover:border-accent hover:text-accent' }}">{{ p }}</a>
             {% endfor %}

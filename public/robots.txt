@@ -1,0 +1,5 @@
+# Le catalogue est public et doit etre trouve ; l'espace des benevoles, non.
+User-agent: *
+Disallow: /admin
+Disallow: /connexion
+Disallow: /deconnexion

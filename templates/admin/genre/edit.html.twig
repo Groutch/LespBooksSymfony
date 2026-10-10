@@ -1,15 +1,20 @@
 {% extends 'admin/layout.html.twig' %}
+{% set retour = {url: path('admin_genre_index'), libelle: 'Rayons'} %}
 
 {% block title %}Rayon « {{ genre.name }} »{% endblock %}
 
 {% block admin_content %}
-<div class="flex flex-wrap items-baseline justify-between gap-4">
-    <h1 class="font-display text-2xl font-semibold tracking-tight">Rayon « {{ genre.name }} »</h1>
-    <a href="{{ path('admin_genre_index') }}" class="text-sm text-ink-muted hover:text-accent">Retour aux rayons</a>
-</div>
+<h1 class="font-display text-2xl font-semibold tracking-tight">Rayon « {{ genre.name }} »</h1>
 
 <p class="mt-1 text-sm text-ink-muted">
-    {{ genre.books|length }} livre{{ genre.books|length > 1 ? 's' }} rangé{{ genre.books|length > 1 ? 's' }} ici.
+    {% set nombre = genre.books|length %}
+    {% if nombre > 0 %}
+        <a href="{{ path('admin_book_index', {genre: genre.slug}) }}" class="text-accent hover:underline">
+            {{- nombre }} livre{{ nombre > 1 ? 's' }} rangé{{ nombre > 1 ? 's' }} ici
+        </a>.
+    {% else %}
+        Aucun livre rangé ici.
+    {% endif %}
 </p>
 
 {{ form_start(form, {attr: {class: 'surface mt-5 p-4'}}) }}

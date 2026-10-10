@@ -3,12 +3,40 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{% block title %}Bibliothèque de Lespouey{% endblock %}</title>
+        {#- Une page ne nomme qu'elle-meme dans `title` : le nom du site est ajoute
+            ici, une seule fois. L'accueil vide le suffixe, il n'a pas d'autre nom. -#}
+        <title>{% block title %}Bibliothèque de Lespouey{% endblock %}{% block title_suffix %} · Bibliothèque de Lespouey{% endblock %}</title>
+        <meta name="description" content="{% block description %}Le catalogue de la bibliothèque communautaire de Lespouey, en accès libre : cherchez un livre et voyez s'il est disponible.{% endblock %}">
+
+        {#- Apercu affiche quand un lien est partage (Facebook, WhatsApp, Signal…) :
+            c'est par la que circulent les nouvelles d'un village. Les reseaux
+            exigent des URL absolues. -#}
+        <meta property="og:site_name" content="Bibliothèque de Lespouey">
+        <meta property="og:locale" content="fr_FR">
+        <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+        <meta property="og:title" content="{{ block('title') }}">
+        <meta property="og:description" content="{{ block('description') }}">
+        <meta property="og:url" content="{{ app.request.uri }}">
+        {% block og_image %}
+            <meta property="og:image" content="{{ absolute_url(asset('images/partage.png')) }}">
+            <meta property="og:image:width" content="1200">
+            <meta property="og:image:height" content="630">
+            <meta property="og:image:alt" content="Bibliothèque de Lespouey">
+            <meta name="twitter:card" content="summary_large_image">
+        {% endblock %}
+
         {#- L'administration s'installe en application : elle surcharge la couleur
             de la barre systeme et ajoute son manifeste. -#}
         <meta name="theme-color" content="{% block theme_color %}#f7f3ec{% endblock %}">
         {% block head_extra %}{% endblock %}
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>📚</text></svg>">
+
+        {#- Les icones de l'application installee servent aussi au site : l'emoji
+            d'avant changeait de dessin selon le systeme et ne ressemblait a rien de
+            connu. favicon.ico reste a la racine, ou certains clients le cherchent
+            sans lire la page ; iOS ignore les deux et veut sa propre balise. -#}
+        <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+        <link rel="icon" href="/pwa/icons/icon-192.png" type="image/png" sizes="192x192">
+        <link rel="apple-touch-icon" href="/pwa/icons/apple-touch-icon.png">
         {% block stylesheets %}
         {% endblock %}
 

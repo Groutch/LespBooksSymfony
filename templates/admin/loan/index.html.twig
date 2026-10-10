@@ -21,7 +21,7 @@
             <li class="surface p-4 {{ loan.overdue ? 'border-warning-line bg-warning-wash' }}">
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div class="min-w-0">
-                        <p class="font-medium">{{ loan.book.title }}</p>
+                        <a href="{{ path('admin_book_show', {id: loan.book.id}) }}" class="font-medium hover:text-accent">{{ loan.book.title }}</a>
                         <p class="text-sm text-ink-muted">
                             Prêté à {{ loan.borrowerName }} le <time datetime="{{ loan.borrowedAt|date('Y-m-d') }}">{{ loan.borrowedAt|date('d/m/Y') }}</time>
                         </p>
@@ -40,6 +40,7 @@
                     <div class="flex shrink-0 flex-wrap items-center gap-2">
                         <form method="post" action="{{ path('admin_loan_extend', {id: loan.id}) }}" class="flex items-center gap-2">
                             <input type="hidden" name="_token" value="{{ csrf_token('prolonger-pret-' ~ loan.id) }}">
+                            <input type="hidden" name="retour" value="{{ app.request.requestUri }}">
                             <label for="echeance-{{ loan.id }}" class="sr-only">Nouvelle échéance</label>
                             <input id="echeance-{{ loan.id }}" type="date" name="dueAt"
                                    value="{{ (loan.dueAt ?? date())|date_modify('+' ~ defaultLoanDays ~ ' days')|date('Y-m-d') }}"
@@ -49,6 +50,7 @@
 
                         <form method="post" action="{{ path('admin_loan_return', {id: loan.id}) }}">
                             <input type="hidden" name="_token" value="{{ csrf_token('rendre-pret-' ~ loan.id) }}">
+                            <input type="hidden" name="retour" value="{{ app.request.requestUri }}">
                             <button type="submit" class="btn btn-primary px-3 text-sm">Rendre</button>
                         </form>
                     </div>
@@ -63,9 +65,10 @@
     <ul class="surface mt-4 divide-y divide-line">
         {% for loan in returnedLoans %}
             <li class="px-4 py-3">
-                <p class="font-medium">{{ loan.book.title }}</p>
+                <a href="{{ path('admin_book_show', {id: loan.book.id}) }}" class="font-medium hover:text-accent">{{ loan.book.title }}</a>
                 <p class="text-sm text-ink-muted">
-                    {{ loan.borrowerName }} — rendu le <time datetime="{{ loan.returnedAt|date('Y-m-d') }}">{{ loan.returnedAt|date('d/m/Y') }}</time>
+                    {#- Nom efface passe le delai de conservation (LoanAnonymizer). -#}
+                    {{ loan.anonymized ? 'Nom effacé' : loan.borrowerName }} — rendu le <time datetime="{{ loan.returnedAt|date('Y-m-d') }}">{{ loan.returnedAt|date('d/m/Y') }}</time>
                 </p>
             </li>
         {% endfor %}

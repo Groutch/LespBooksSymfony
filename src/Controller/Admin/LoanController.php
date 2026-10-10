@@ -8,6 +8,7 @@ use App\Entity\Book;
 use App\Entity\Loan;
 use App\Form\LoanType;
 use App\Repository\LoanRepository;
+use App\Service\LoanAnonymizer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -28,8 +29,12 @@ class LoanController extends AbstractController
     }
 
     #[Route('', name: 'admin_loan_index', methods: ['GET'])]
-    public function index(LoanRepository $loanRepository): Response
+    public function index(LoanRepository $loanRepository, LoanAnonymizer $loanAnonymizer): Response
     {
+        // Avant de charger les retours : seul cet ecran les affiche, aucun nom
+        // echu ne doit y apparaitre, meme si le tableau de bord n'a pas ete ouvert.
+        $loanAnonymizer->anonymizeExpired();
+
         return $this->render('admin/loan/index.html.twig', [
             'activeLoans' => $loanRepository->findActive(),
             'returnedLoans' => $loanRepository->findReturned(20),
@@ -78,7 +83,7 @@ class LoanController extends AbstractController
         if ($loan->isReturned()) {
             $this->addFlash('error', 'Ce prêt a déjà été rendu.');
 
-            return $this->redirectToRoute('admin_loan_index');
+            return $this->redirectBack($request);
         }
 
         $loan->setReturnedAt(new \DateTimeImmutable('today'));
@@ -86,7 +91,7 @@ class LoanController extends AbstractController
 
         $this->addFlash('success', \sprintf('« %s » est de retour en rayon.', $loan->getBook()?->getTitle()));
 
-        return $this->redirectToRoute('admin_loan_index');
+        return $this->redirectBack($request);
     }
 
     #[Route('/{id}/prolonger', name: 'admin_loan_extend', requirements: ['id' => '\d+'], methods: ['POST'])]
@@ -99,7 +104,7 @@ class LoanController extends AbstractController
         if ($loan->isReturned()) {
             $this->addFlash('error', 'Un prêt déjà rendu ne peut pas être prolongé.');
 
-            return $this->redirectToRoute('admin_loan_index');
+            return $this->redirectBack($request);
         }
 
         $dueAt = $this->readDueAt($request->request->getString('dueAt'), $loan);
@@ -107,19 +112,36 @@ class LoanController extends AbstractController
         if (null === $dueAt) {
             $this->addFlash('error', 'La nouvelle échéance est invalide.');
 
-            return $this->redirectToRoute('admin_loan_index');
+            return $this->redirectBack($request);
         }
 
         if ($dueAt < $loan->getBorrowedAt()) {
             $this->addFlash('error', 'La nouvelle échéance ne peut pas précéder la date de prêt.');
 
-            return $this->redirectToRoute('admin_loan_index');
+            return $this->redirectBack($request);
         }
 
         $loan->setDueAt($dueAt);
         $this->entityManager->flush();
 
         $this->addFlash('success', \sprintf('Prêt prolongé jusqu\'au %s.', $dueAt->format('d/m/Y')));
+
+        return $this->redirectBack($request);
+    }
+
+    /**
+     * Rendre et Prolonger se font depuis la liste des prets, la fiche d'un livre
+     * ou la liste des livres : on revient la ou l'on etait, filtres compris.
+     * Seul un chemin interne a la gestion est suivi, jamais une adresse
+     * exterieure ; a defaut, la liste des prets.
+     */
+    private function redirectBack(Request $request): Response
+    {
+        $retour = $request->request->getString('retour');
+
+        if (1 === preg_match('#^/admin(?:[/?]|$)#', $retour) && !str_contains($retour, '\\')) {
+            return $this->redirect($retour);
+        }
 
         return $this->redirectToRoute('admin_loan_index');
     }

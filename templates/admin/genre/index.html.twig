@@ -27,7 +27,15 @@
             <li class="flex items-center gap-3 px-4 py-3">
                 <div class="min-w-0 flex-1">
                     <p class="truncate font-medium">{{ genre.name }}</p>
-                    <p class="text-sm text-ink-muted">{{ genre.books|length }} livre{{ genre.books|length > 1 ? 's' }}</p>
+                    {#- Ce qui est range la : la liste des livres, filtree sur ce rayon. -#}
+                    {% set nombre = genre.books|length %}
+                    {% if nombre > 0 %}
+                        <a href="{{ path('admin_book_index', {genre: genre.slug}) }}" class="text-sm text-accent hover:underline">
+                            Voir {{ nombre > 1 ? 'les ' ~ nombre ~ ' livres' : 'le livre' }}
+                        </a>
+                    {% else %}
+                        <p class="text-sm text-ink-muted">Aucun livre</p>
+                    {% endif %}
                 </div>
                 <a href="{{ path('admin_genre_edit', {id: genre.id}) }}" class="btn btn-ghost shrink-0 px-3 text-sm">Modifier</a>
             </li>

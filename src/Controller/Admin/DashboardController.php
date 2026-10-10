@@ -6,6 +6,7 @@ namespace App\Controller\Admin;
 
 use App\Repository\BookRepository;
 use App\Repository\LoanRepository;
+use App\Service\LoanAnonymizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -19,7 +20,12 @@ class DashboardController extends AbstractController
     public function index(
         BookRepository $bookRepository,
         LoanRepository $loanRepository,
+        LoanAnonymizer $loanAnonymizer,
     ): Response {
+        // Page d'ouverture de l'application installee : le menage des noms
+        // echus y passe a chaque permanence (voir LoanAnonymizer).
+        $loanAnonymizer->anonymizeExpired();
+
         return $this->render('admin/dashboard.html.twig', [
             'bookCount' => $bookRepository->countAll(),
             'activeLoanCount' => $loanRepository->countActive(),

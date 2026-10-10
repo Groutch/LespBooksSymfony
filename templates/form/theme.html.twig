@@ -33,6 +33,17 @@
     {{- parent() -}}
 {%- endblock textarea_widget -%}
 
+{#- Le champ fichier passe par `form_widget_simple` (il n'y a pas de `file_widget`,
+    voir plus haut). Avec `field`, il prenait le fond blanc des champs de saisie et
+    son bouton natif s'y fondait : les benevoles ne le voyaient pas. Le bouton est
+    habille comme une action ; l'accent sur son halo donne 6,32:1. -#}
+{%- block form_widget_simple -%}
+    {%- if type|default('text') == 'file' -%}
+        {%- set attr = attr|merge({class: attr.class|default('block w-full text-sm text-ink-muted file:mr-3 file:min-h-11 file:cursor-pointer file:rounded-xs file:border file:border-accent file:bg-accent-wash file:px-4 file:py-2 file:font-medium file:text-accent hover:file:bg-accent hover:file:text-surface')}) -%}
+    {%- endif -%}
+    {{- parent() -}}
+{%- endblock form_widget_simple -%}
+
 {#- La case a cocher ne prend pas `field` : elle n'occupe pas la largeur et
     n'a pas de hauteur minimale de 44 px. -#}
 {%- block checkbox_widget -%}

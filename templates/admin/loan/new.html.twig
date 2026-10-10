@@ -1,12 +1,10 @@
 {% extends 'admin/layout.html.twig' %}
+{% set retour = {url: path('admin_book_show', {id: book.id}), libelle: book.title} %}
 
 {% block title %}Prêter « {{ book.title }} »{% endblock %}
 
 {% block admin_content %}
-<div class="flex flex-wrap items-baseline justify-between gap-4">
-    <h1 class="font-display text-2xl font-semibold tracking-tight">Prêter « {{ book.title }} »</h1>
-    <a href="{{ path('admin_loan_index') }}" class="text-sm text-ink-muted hover:text-accent">Retour aux prêts</a>
-</div>
+<h1 class="font-display text-2xl font-semibold tracking-tight">Prêter « {{ book.title }} »</h1>
 
 <p class="mt-1 text-sm text-ink-muted">{{ book.authorNames|default('Auteur inconnu') }}</p>
 
@@ -21,7 +19,7 @@
 
     <div class="flex flex-wrap gap-2">
         <button type="submit" class="btn btn-primary">Enregistrer le prêt</button>
-        <a href="{{ path('admin_book_index') }}" class="btn btn-ghost">Annuler</a>
+        <a href="{{ path('admin_book_show', {id: book.id}) }}" class="btn btn-ghost">Annuler</a>
     </div>
 {{ form_end(form) }}
 {% endblock %}

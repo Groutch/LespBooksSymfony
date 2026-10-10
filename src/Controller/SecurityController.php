@@ -26,8 +26,11 @@ class SecurityController extends AbstractController
 
     /**
      * Interceptée par le pare-feu : le corps n'est jamais exécuté.
+     *
+     * POST seulement : un GET, même lancé par le préchargement de Turbo au simple
+     * survol d'un lien, répond 405 avant d'atteindre le pare-feu.
      */
-    #[Route('/deconnexion', name: 'app_logout', methods: ['GET'])]
+    #[Route('/deconnexion', name: 'app_logout', methods: ['POST'])]
     public function logout(): never
     {
         throw new \LogicException('Cette méthode est interceptée par la configuration logout du pare-feu.');

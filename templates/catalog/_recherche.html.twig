@@ -1,0 +1,154 @@
+{#- Recherche et filtres, partages par le catalogue public et la liste de la
+    gestion : memes parametres d'URL (BookSearchCriteria::fromQuery()), meme
+    formulaire. `route` designe la page qui recoit le formulaire.
+
+    Attend : route, criteria, total, categories, genres, selectedAuthor
+    (fournis par CatalogSearch). -#}
+
+{#- Lien de retrait d'un filtre : on repart de la query string courante, privee
+    des cles visees et de la pagination, qui n'a plus de sens apres un changement
+    de filtre. -#}
+{% macro sans(route, cles) -%}
+    {{- path(route, app.request.query.all|filter((v, k) => k not in cles and k != 'page')) -}}
+{%- endmacro %}
+
+{% import _self as url %}
+
+{% set selectedCategory = criteria.category ? categories|filter(c => c.slug == criteria.category)|first : null %}
+{% set selectedGenre = criteria.genre ? genres|filter(g => g.slug == criteria.genre)|first : null %}
+{#- Les filtres ranges dans « Affiner la recherche » : leur nombre s'affiche sur le bouton. -#}
+{% set filtresAffines = [selectedCategory, selectedGenre, criteria.yearFrom or criteria.yearTo, criteria.availableOnly]|filter(v => v)|length %}
+
+<form method="get" action="{{ path(route) }}" class="mt-6">
+    <div class="flex max-w-2xl gap-2">
+        <label for="recherche" class="sr-only">Titre, auteur, éditeur ou ISBN</label>
+        <input id="recherche" type="search" name="q" value="{{ criteria.query }}" class="field"
+               placeholder="Titre, auteur, éditeur, ISBN…">
+        <button type="submit" class="btn btn-primary shrink-0">Chercher</button>
+    </div>
+
+    {#- Les filtres actifs sont visibles et retirables un par un : sans cela, il
+        fallait relire les cinq controles pour savoir ce qui etait filtre. -#}
+    {% if criteria.hasFilters %}
+        <div class="mt-4 flex flex-wrap items-center gap-2">
+            <span class="text-sm text-ink-muted">Filtres :</span>
+
+            {% if criteria.query %}
+                <a href="{{ url.sans(route, ['q']) }}" class="chip chip-active">« {{ criteria.query }} » <span aria-hidden="true">✕</span><span class="sr-only">retirer</span></a>
+            {% endif %}
+            {% if selectedCategory %}
+                <a href="{{ url.sans(route, ['categorie']) }}" class="chip chip-active">{{ selectedCategory.name }} <span aria-hidden="true">✕</span><span class="sr-only">retirer</span></a>
+            {% endif %}
+            {% if selectedGenre %}
+                <a href="{{ url.sans(route, ['genre']) }}" class="chip chip-active">Rayon {{ selectedGenre.name }} <span aria-hidden="true">✕</span><span class="sr-only">retirer</span></a>
+            {% endif %}
+            {% if selectedAuthor %}
+                <a href="{{ url.sans(route, ['auteur']) }}" class="chip chip-active">{{ selectedAuthor.name }} <span aria-hidden="true">✕</span><span class="sr-only">retirer</span></a>
+            {% endif %}
+            {% if criteria.yearFrom or criteria.yearTo %}
+                <a href="{{ url.sans(route, ['anneeMin', 'anneeMax']) }}" class="chip chip-active">
+                    {% if criteria.yearFrom and criteria.yearTo %}{{ criteria.yearFrom }}–{{ criteria.yearTo }}
+                    {%- elseif criteria.yearFrom %}après {{ criteria.yearFrom }}
+                    {%- else %}avant {{ criteria.yearTo }}{% endif %}
+                    <span aria-hidden="true">✕</span><span class="sr-only">retirer</span>
+                </a>
+            {% endif %}
+            {% if criteria.availableOnly %}
+                <a href="{{ url.sans(route, ['disponibles']) }}" class="chip chip-active">Disponibles <span aria-hidden="true">✕</span><span class="sr-only">retirer</span></a>
+            {% endif %}
+
+            <a href="{{ path(route) }}" class="text-sm text-accent underline underline-offset-2">Tout effacer</a>
+        </div>
+    {% endif %}
+
+    {#- <details> natif : les filtres se replient sans une ligne de JavaScript,
+        et les <select> restent dans le formulaire, donc la soumission GET est
+        inchangee. Ouvert d'office si un filtre est deja pose.
+
+        Le declencheur etait un petit lien gris que personne ne remarquait : c'est
+        desormais un bouton, avec une icone de reglages et le nombre de filtres. -#}
+    <details class="group mt-4" {{ filtresAffines ? 'open' }}>
+        <summary class="btn btn-ghost list-none text-sm [&::-webkit-details-marker]:hidden">
+            <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" aria-hidden="true">
+                <path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/>
+                <circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>
+            </svg>
+            Affiner la recherche
+            {% if filtresAffines %}
+                <span class="rounded-full bg-accent px-1.5 text-xs font-medium text-surface tabular">
+                    {{- filtresAffines -}}
+                    <span class="sr-only"> filtre{{ filtresAffines > 1 ? 's' }} actif{{ filtresAffines > 1 ? 's' }}</span>
+                </span>
+            {% endif %}
+            <span class="text-xs transition-transform group-open:rotate-90" aria-hidden="true">▸</span>
+        </summary>
+
+        <div class="surface mt-3 grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4">
+            <label class="block text-sm">
+                <span class="mb-1 block font-medium">Catégorie</span>
+                <select name="categorie" class="field">
+                    <option value="">Toutes</option>
+                    {% for category in categories %}
+                        <option value="{{ category.slug }}" {{ category.slug == criteria.category ? 'selected' }}>{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label class="block text-sm">
+                <span class="mb-1 block font-medium">Rayon</span>
+                <select name="genre" class="field">
+                    <option value="">Tous</option>
+                    {% for genre in genres %}
+                        <option value="{{ genre.slug }}" {{ genre.slug == criteria.genre ? 'selected' }}>{{ genre.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <div class="text-sm">
+                <span class="mb-1 block font-medium">Année de publication</span>
+                <div class="flex items-center gap-2">
+                    <label class="sr-only" for="annee-min">Année minimale</label>
+                    <input id="annee-min" type="number" name="anneeMin" value="{{ criteria.yearFrom }}" min="1400" max="2200"
+                           placeholder="de" class="field tabular">
+                    <span class="text-ink-faint" aria-hidden="true">–</span>
+                    <label class="sr-only" for="annee-max">Année maximale</label>
+                    <input id="annee-max" type="number" name="anneeMax" value="{{ criteria.yearTo }}" min="1400" max="2200"
+                           placeholder="à" class="field tabular">
+                </div>
+            </div>
+
+            <div class="text-sm">
+                <span class="mb-1 block font-medium">Disponibilité</span>
+                <label class="flex min-h-11 items-center gap-2 text-ink-muted">
+                    <input type="checkbox" name="disponibles" value="1" {{ criteria.availableOnly ? 'checked' }} class="size-4 accent-accent">
+                    Disponibles seulement
+                </label>
+            </div>
+
+            {% if selectedAuthor %}
+                <input type="hidden" name="auteur" value="{{ selectedAuthor.slug }}">
+            {% endif %}
+
+            <div class="sm:col-span-2 lg:col-span-4">
+                <button type="submit" class="btn btn-primary">Appliquer les filtres</button>
+            </div>
+        </div>
+    </details>
+
+    {#- Le tri rejoint le compte de resultats, la ou l'oeil le cherche. -#}
+    <div class="mt-6 flex flex-wrap items-baseline justify-between gap-3 border-b border-line pb-3">
+        <p class="text-ink-muted">
+            <strong class="font-medium text-ink tabular">{{ total }}</strong> résultat{{ total > 1 ? 's' }}.
+        </p>
+        <label class="flex items-center gap-2 text-sm text-ink-muted">
+            Trier par
+            <select name="tri" class="field min-h-0 w-auto py-1.5" onchange="this.form.submit()">
+                <option value="recent" {{ criteria.sort == 'recent' ? 'selected' }}>Ajout récent</option>
+                <option value="title" {{ criteria.sort == 'title' ? 'selected' }}>Titre</option>
+                <option value="year" {{ criteria.sort == 'year' ? 'selected' }}>Année</option>
+            </select>
+            <noscript><button type="submit" class="btn btn-ghost min-h-0 py-1">Trier</button></noscript>
+        </label>
+    </div>
+</form>

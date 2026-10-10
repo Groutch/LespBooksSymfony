@@ -1,0 +1,21 @@
+{% extends 'public/layout.html.twig' %}
+
+{#- Toutes les autres erreurs, 500 compris (apercu : /_error/500). Le visiteur
+    n'y peut rien : on le dit, sans detail technique. -#}
+
+{% block title %}Un problème est survenu{% endblock %}
+
+{% block public_content %}
+<section class="max-w-xl">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-faint">Erreur {{ status_code }}</p>
+    <h1 class="mt-2 font-display text-3xl font-semibold tracking-tight">Un problème est survenu</h1>
+    <p class="mt-3 text-ink-muted">
+        La page n'a pas pu s'afficher. Réessayez dans un instant ; si le problème persiste,
+        prévenez la bibliothèque.
+    </p>
+
+    <p class="mt-6 text-sm">
+        <a href="{{ path('home') }}" class="text-accent hover:underline">Revenir à l'accueil</a>
+    </p>
+</section>
+{% endblock %}

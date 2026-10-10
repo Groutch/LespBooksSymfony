@@ -1,0 +1,24 @@
+{% extends 'public/layout.html.twig' %}
+
+{#- Servie par Symfony hors mode debug (apercu : /_error/403). Deux cas la
+    produisent : un compte sans acces a la gestion, et un jeton CSRF perime
+    — formulaire laisse ouvert longtemps sur un telephone. Le texte doit
+    convenir aux deux, sans accuser un benevole qui a simplement trop attendu. -#}
+
+{% block title %}Accès refusé{% endblock %}
+
+{% block public_content %}
+<section class="max-w-xl">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-faint">Erreur 403</p>
+    <h1 class="mt-2 font-display text-3xl font-semibold tracking-tight">Accès refusé</h1>
+    <p class="mt-3 text-ink-muted">
+        Cette action n'a pas été autorisée. Si vous validiez un formulaire resté longtemps ouvert,
+        rechargez la page et recommencez : il avait simplement expiré.
+    </p>
+    <p class="mt-3 text-ink-muted">La gestion de la bibliothèque est réservée aux bénévoles.</p>
+
+    <p class="mt-6 text-sm">
+        <a href="{{ path('home') }}" class="text-accent hover:underline">Revenir à l'accueil</a>
+    </p>
+</section>
+{% endblock %}

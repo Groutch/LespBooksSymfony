@@ -1,0 +1,50 @@
+{% extends 'public/layout.html.twig' %}
+
+{#- Obligatoires pour tout site edite en France (loi pour la confiance dans
+    l'economie numerique, art. 6) : editeur, directeur de la publication,
+    hebergeur. Les valeurs vivent dans `app.bibliotheque` (services.yaml). -#}
+
+{% block title %}Mentions légales{% endblock %}
+
+{% block description %}Éditeur, directeur de la publication et hébergeur du site de la bibliothèque communautaire de Lespouey.{% endblock %}
+
+{% block public_content %}
+<h1 class="font-display text-3xl font-semibold tracking-tight">Mentions légales</h1>
+
+<dl class="mt-8 max-w-[62ch] divide-y divide-line border-y border-line">
+    <div class="grid gap-1 py-4 sm:grid-cols-[14rem_1fr] sm:gap-4">
+        <dt class="font-medium">Éditeur du site</dt>
+        <dd>{{ bibliotheque.editeur }}<br>{{ bibliotheque.adresse|join(', ') }}</dd>
+    </div>
+    <div class="grid gap-1 py-4 sm:grid-cols-[14rem_1fr] sm:gap-4">
+        <dt class="font-medium">Directeur de la publication</dt>
+        <dd>{{ bibliotheque.directeur_publication }}</dd>
+    </div>
+    <div class="grid gap-1 py-4 sm:grid-cols-[14rem_1fr] sm:gap-4">
+        <dt class="font-medium">Hébergeur</dt>
+        <dd>
+            {{ bibliotheque.hebergeur.nom }}<br>
+            {{ bibliotheque.hebergeur.adresse }}<br>
+            Téléphone : <span class="tabular">{{ bibliotheque.hebergeur.telephone }}</span>
+        </dd>
+    </div>
+</dl>
+
+<section class="mt-10 max-w-[62ch]" aria-labelledby="titre-contenus">
+    <h2 id="titre-contenus" class="font-display text-xl font-semibold tracking-tight">Contenus</h2>
+    <p class="mt-3 leading-relaxed">
+        Les notices des livres proviennent des catalogues de Google Books, d'Open Library et de la
+        Bibliothèque nationale de France, complétés par les bénévoles. Couvertures et résumés restent
+        la propriété de leurs auteurs et éditeurs : ils ne sont reproduits que pour présenter les livres
+        disponibles au prêt.
+    </p>
+</section>
+
+<section class="mt-10 max-w-[62ch]" aria-labelledby="titre-donnees">
+    <h2 id="titre-donnees" class="font-display text-xl font-semibold tracking-tight">Données personnelles</h2>
+    <p class="mt-3 leading-relaxed">
+        Ce que le site conserve, et comment exercer vos droits : voir la page
+        <a href="{{ path('privacy_policy') }}" class="text-accent underline underline-offset-2 hover:no-underline">Confidentialité</a>.
+    </p>
+</section>
+{% endblock %}

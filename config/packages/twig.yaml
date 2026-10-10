@@ -1,6 +1,10 @@
 twig:
     file_name_pattern: '*.twig'
     form_themes: ['form/theme.html.twig']
+    globals:
+        # Le pied de page en a besoin sur toutes les pages publiques : une
+        # variable globale evite de la passer depuis chaque controleur.
+        bibliotheque: '%app.bibliotheque%'
 
 when@test:
     twig:

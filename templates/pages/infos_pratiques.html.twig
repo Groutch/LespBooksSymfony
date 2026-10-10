@@ -1,0 +1,55 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}Infos pratiques{% endblock %}
+
+{% block description %}Adresse, horaires d'ouverture et fonctionnement des prêts de la bibliothèque communautaire de Lespouey.{% endblock %}
+
+{% block public_content %}
+<h1 class="font-display text-3xl font-semibold tracking-tight">Infos pratiques</h1>
+
+<div class="mt-8 grid gap-5 sm:grid-cols-2">
+    <section class="surface p-5" aria-labelledby="titre-adresse">
+        <h2 id="titre-adresse" class="font-display text-xl font-semibold tracking-tight">Où nous trouver</h2>
+        <address class="mt-3 not-italic leading-relaxed">
+            Bibliothèque communautaire de Lespouey<br>
+            {% for ligne in bibliotheque.adresse %}{{ ligne }}{% if not loop.last %}<br>{% endif %}{% endfor %}
+        </address>
+    </section>
+
+    <section class="surface p-5" aria-labelledby="titre-horaires">
+        <h2 id="titre-horaires" class="font-display text-xl font-semibold tracking-tight">Horaires d'ouverture</h2>
+        <dl class="mt-3 divide-y divide-line">
+            {% for h in bibliotheque.horaires %}
+                <div class="flex items-baseline justify-between gap-4 py-2">
+                    <dt class="font-medium">{{ h.jour|capitalize }}</dt>
+                    <dd class="tabular text-ink-muted">{{ h.ouverture }} – {{ h.fermeture }}</dd>
+                </div>
+            {% endfor %}
+        </dl>
+    </section>
+</div>
+
+<section class="mt-10 max-w-[62ch]" aria-labelledby="titre-emprunter">
+    <h2 id="titre-emprunter" class="font-display text-xl font-semibold tracking-tight">Emprunter un livre</h2>
+    <ol class="mt-3 list-decimal space-y-2 pl-5 leading-relaxed">
+        <li>
+            <a href="{{ path('catalog_index') }}" class="text-accent underline underline-offset-2 hover:no-underline">Cherchez le livre</a>
+            dans le catalogue : sa fiche dit s'il est disponible, et où le trouver sur les étagères.
+        </li>
+        <li>Venez pendant les heures d'ouverture : un bénévole enregistre le prêt à votre nom.</li>
+        <li>
+            La date de retour est fixée à ce moment-là, en général
+            {{ defaultLoanDays % 7 == 0 ? (defaultLoanDays // 7) ~ ' semaines' : defaultLoanDays ~ ' jours' }}
+            plus tard. Pas fini à temps ? Demandez une prolongation.
+        </li>
+    </ol>
+</section>
+
+<section class="mt-10 max-w-[62ch]" aria-labelledby="titre-contact">
+    <h2 id="titre-contact" class="font-display text-xl font-semibold tracking-tight">Nous contacter</h2>
+    <p class="mt-3 leading-relaxed">
+        Pendant les heures d'ouverture, à la bibliothèque. Le reste du temps, adressez-vous à la mairie
+        de Lespouey.
+    </p>
+</section>
+{% endblock %}

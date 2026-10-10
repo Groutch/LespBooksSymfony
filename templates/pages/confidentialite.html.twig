@@ -1,0 +1,79 @@
+{% extends 'public/layout.html.twig' %}
+
+{#- Information due aux personnes dont on conserve des donnees (RGPD, art. 13).
+    Chaque affirmation ici doit rester vraie : « aucun cookie » est verifie par
+    InfoPagesTest, et c'est ce qui dispense le site d'un bandeau de consentement. -#}
+
+{% block title %}Confidentialité{% endblock %}
+
+{% block description %}Quelles données le site de la bibliothèque de Lespouey conserve, pourquoi, et comment exercer vos droits.{% endblock %}
+
+{% block public_content %}
+<h1 class="font-display text-3xl font-semibold tracking-tight">Confidentialité</h1>
+<p class="mt-3 max-w-[62ch] text-ink-muted">
+    Le site collecte aussi peu de données que possible. Voici lesquelles, et pourquoi.
+</p>
+
+<div class="mt-8 max-w-[62ch] space-y-10 leading-relaxed">
+    <section aria-labelledby="titre-catalogue">
+        <h2 id="titre-catalogue" class="font-display text-xl font-semibold tracking-tight">Consulter le catalogue</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-5">
+            <li>
+                Aucun compte n'est nécessaire, et le site public ne dépose
+                <strong class="font-medium">aucun cookie</strong> : il n'y a donc rien à accepter.
+            </li>
+            <li>
+                Ni mesure d'audience, ni publicité, ni service tiers : polices, images et scripts sont servis
+                par le site lui-même.
+            </li>
+            <li>
+                Comme tout hébergeur, {{ bibliotheque.hebergeur.nom }} conserve des journaux techniques des
+                connexions (adresse IP, page demandée, date et heure) pour la sécurité du service.
+            </li>
+        </ul>
+    </section>
+
+    <section aria-labelledby="titre-pret">
+        <h2 id="titre-pret" class="font-display text-xl font-semibold tracking-tight">Emprunter un livre</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-5">
+            <li>
+                Un bénévole enregistre votre prénom et votre nom, la date du prêt, la date de retour prévue
+                et, au besoin, une note.
+            </li>
+            <li>
+                Ces informations servent uniquement à suivre les prêts. Seuls les bénévoles connectés les
+                voient : le site public indique seulement qu'un livre est emprunté, et jusqu'à quand.
+            </li>
+            <li>
+                Une fois le livre rendu, elles restent dans l'historique des prêts. Vous pouvez demander à tout
+                moment qu'elles soient effacées.
+            </li>
+        </ul>
+    </section>
+
+    <section aria-labelledby="titre-benevoles">
+        <h2 id="titre-benevoles" class="font-display text-xl font-semibold tracking-tight">Espace bénévoles</h2>
+        <p class="mt-3">
+            Les bénévoles se connectent avec leur adresse e-mail et un mot de passe, qui n'est jamais
+            conservé en clair. La connexion pose un cookie de session et, si la case « Rester connecté »
+            est cochée, un second cookie valable 7 jours. Ils sont indispensables à l'espace bénévoles et ne
+            servent à rien d'autre.
+        </p>
+    </section>
+
+    <section aria-labelledby="titre-droits">
+        <h2 id="titre-droits" class="font-display text-xl font-semibold tracking-tight">Responsable et droits</h2>
+        <p class="mt-3">
+            Responsable du traitement : {{ bibliotheque.editeur }}, {{ bibliotheque.adresse|join(', ') }}.
+            Ces données sont traitées pour assurer le service de prêt de la bibliothèque, au titre d'une
+            mission d'intérêt public.
+        </p>
+        <p class="mt-3">
+            Vous pouvez consulter, faire corriger ou effacer les informations qui vous concernent, ou vous
+            opposer à leur traitement : adressez-vous aux bénévoles pendant les heures d'ouverture, ou à la
+            mairie. En cas de difficulté, vous pouvez adresser une réclamation à la CNIL
+            (<a href="https://www.cnil.fr" class="text-accent underline underline-offset-2 hover:no-underline">cnil.fr</a>).
+        </p>
+    </section>
+</div>
+{% endblock %}

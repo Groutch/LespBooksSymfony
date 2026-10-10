@@ -14,6 +14,23 @@ parameters:
     # Echeance proposee a la creation d'un pret et pas d'une prolongation.
     app.default_loan_days: 28
 
+    # Coordonnees publiques de la bibliotheque, exposees aux gabarits sous le nom
+    # `bibliotheque` (twig.yaml) : pied de page, accueil, « Infos pratiques »,
+    # mentions legales. Un horaire qui change se corrige ici, et nulle part ailleurs.
+    app.bibliotheque:
+        adresse: ['35 rue des Pyrénées', '65190 Lespouey']
+        horaires:
+            - { jour: 'mardi', ouverture: '9 h', fermeture: '11 h 30' }
+            - { jour: 'jeudi', ouverture: '16 h', fermeture: '18 h 30' }
+        # Mentions legales (loi pour la confiance dans l'economie numerique, art. 6).
+        # Une commune n'a pas a nommer son maire : la fonction suffit.
+        editeur: 'Mairie de Lespouey'
+        directeur_publication: 'Le maire de Lespouey'
+        hebergeur:
+            nom: 'OVH SAS'
+            adresse: '2 rue Kellermann, 59100 Roubaix, France'
+            telephone: '1007'
+
 services:
     # default configuration for services in *this* file
     _defaults:

@@ -1,0 +1,11 @@
+{#- Les horaires en une phrase, pour l'accueil et le pied de page :
+    « le mardi de 9 h à 11 h 30 et le jeudi de 16 h à 18 h 30 ».
+    Une seule mise en forme, tiree de `app.bibliotheque` (services.yaml). -#}
+{#- Une heure ne se coupe pas en fin de ligne : « 16 » d'un cote, « h » de l'autre. -#}
+{% macro horaires_en_phrase(horaires) -%}
+    {%- for h in horaires -%}
+        {{- loop.first ? '' : (loop.last ? ' et ' : ', ') -}}
+        le {{ h.jour }} de <span class="whitespace-nowrap">{{ h.ouverture }}</span>
+        à <span class="whitespace-nowrap">{{ h.fermeture }}</span>
+    {%- endfor -%}
+{%- endmacro %}

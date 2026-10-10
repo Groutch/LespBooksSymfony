@@ -11,7 +11,7 @@ seule application Symfony, hébergée sur un mutualisé OVH.
 
 ## Ce que fait l'application
 
-### Le site public : `/`, `/catalogue`, `/livre/{id}`
+### Le site public : `/`, `/catalogue`, `/livre/{id}` et les pages d'information
 
 Ouvert à tous, sans compte.
 
@@ -25,6 +25,11 @@ Ouvert à tous, sans compte.
   thèmes, description, éditeur, année, pages, langue, ISBN. La disponibilité s'affiche
   (« Disponible », ou « Emprunté » avec la date de retour prévue), mais **jamais le nom de
   l'emprunteur**.
+- **Infos pratiques** (`/infos-pratiques`) : adresse, horaires d'ouverture, comment emprunter. Les
+  horaires figurent aussi sur l'accueil et au pied de chaque page publique.
+- **Mentions légales** (`/mentions-legales`) et **Confidentialité** (`/confidentialite`) :
+  éditeur (la mairie), directeur de la publication, hébergeur, et données conservées. Le site
+  public ne dépose **aucun cookie**, et n'a donc pas besoin de bandeau de consentement.
 - **Partage et référencement** : chaque page a son titre et sa description. Un lien partagé
   (Facebook, WhatsApp…) affiche un aperçu : la couverture pour un livre, l'image du site sinon.
   Les erreurs 404, 403 et 500 ont leurs propres pages, aux couleurs du site.
@@ -176,7 +181,8 @@ Elles se définissent dans `.env.local`, qui n'est jamais versionné.
 | Paramètre | Valeur | Rôle |
 |---|---|---|
 | `app.category_similarity_threshold` | `0.85` | Seuil au-delà duquel une catégorie proposée rejoint une catégorie existante (0 = tout fusionner, 1 = égalité stricte) |
-| `app.default_loan_days` | `28` | Échéance proposée pour un nouveau prêt, et durée ajoutée par une prolongation sans date |
+| `app.default_loan_days` | `28` | Échéance proposée pour un nouveau prêt, et durée ajoutée par une prolongation sans date. « Infos pratiques » l'annonce aux habitants. |
+| `app.bibliotheque` | adresse, horaires, éditeur, directeur de la publication, hébergeur | Coordonnées publiques, exposées aux gabarits sous le nom `bibliotheque` (`twig.globals`). **Un horaire qui change se corrige ici, et nulle part ailleurs.** |
 
 Ils sont injectés par `#[Autowire('%app.…%')]`.
 
@@ -204,7 +210,7 @@ public/
   uploads/books/            couvertures téléversées (données, non versionnées)
 src/
   Command/                  app:user:create, app:isbn:lookup
-  Controller/               site public et sécurité
+  Controller/               site public, pages d'information (PageController) et sécurité
   Controller/Admin/         tableau de bord, livres, rayons, prêts
   Entity/                   Book, Author, Category, Genre, BookImage, Loan, User
   Form/                     BookType, GenreType, LoanType
@@ -216,7 +222,8 @@ src/
   Service/Catalog/          import, déduplication, téléchargement des couvertures
 templates/
   base.html.twig            squelette commun
-  public/, home/, catalog/  site public
+  public/, home/, catalog/  site public (public/_bibliotheque : horaires mis en phrase)
+  pages/                    infos pratiques, mentions légales, confidentialité
   admin/                    espace bénévoles
   bundles/TwigBundle/Exception/  pages d'erreur 404, 403 et générique
   form/theme.html.twig      thème de tous les formulaires Symfony
@@ -230,6 +237,9 @@ tests/                      PHPUnit, sur une vraie base MySQL `app_test`
 | `home` | GET | `/` | Accueil public |
 | `catalog_index` | GET | `/catalogue` | Recherche : `q`, `categorie`, `genre`, `auteur`, `anneeMin`, `anneeMax`, `disponibles`, `tri` (`recent`, `title`, `year`), `page` |
 | `catalog_book` | GET | `/livre/{id}` | Fiche publique |
+| `practical_info` | GET | `/infos-pratiques` | Adresse, horaires, comment emprunter |
+| `legal_notice` | GET | `/mentions-legales` | Mentions légales |
+| `privacy_policy` | GET | `/confidentialite` | Données conservées et droits |
 | `app_login` | GET, POST | `/connexion` | Connexion (CSRF, « Rester connecté » 7 jours) |
 | `app_logout` | GET | `/deconnexion` | Déconnexion, retour à l'accueil |
 | `admin_dashboard` | GET | `/admin` | Tableau de bord |
@@ -426,6 +436,9 @@ non plus dans `var/cache`, que chaque livraison efface. Une session dure une jou
 Chacune est couverte par un test.
 
 - Le site public **n'affiche jamais le nom d'un emprunteur**, seulement « Emprunté » et l'échéance.
+- Un visiteur anonyme **ne reçoit aucun cookie**. La page de confidentialité l'affirme, et c'est
+  ce qui dispense le site d'un bandeau de consentement : ne jamais démarrer de session sur une page
+  publique, ni ajouter d'outil de mesure qui en dépose.
 - **Un seul prêt actif par livre.**
 - Supprimer une catégorie ou un rayon **ne supprime jamais de livre**.
 - **Pas de catégories en double** : une catégorie proche d'une existante est réutilisée.

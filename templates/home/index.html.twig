@@ -1,4 +1,5 @@
 {% extends 'public/layout.html.twig' %}
+{% import 'public/_bibliotheque.html.twig' as biblio %}
 
 {#- Le titre par defaut de base.html.twig est deja le nom du site. -#}
 {% block title_suffix %}{% endblock %}
@@ -17,6 +18,12 @@
         <input id="recherche-accueil" type="search" name="q" class="field" placeholder="Titre, auteur, éditeur, ISBN…">
         <button type="submit" class="btn btn-primary shrink-0">Chercher</button>
     </form>
+
+    {#- Trouver un livre ne sert a rien sans savoir quand venir le chercher. -#}
+    <p class="mt-4 text-sm text-ink-muted">
+        Ouverte {{ biblio.horaires_en_phrase(bibliotheque.horaires) }}, {{ bibliotheque.adresse|first }}.
+        <a href="{{ path('practical_info') }}" class="text-accent underline underline-offset-2 hover:no-underline">Infos pratiques</a>
+    </p>
 </section>
 
 {% if categories is not empty %}

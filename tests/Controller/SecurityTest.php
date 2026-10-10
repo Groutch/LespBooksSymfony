@@ -36,7 +36,7 @@ class SecurityTest extends AdminWebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Espace bénévoles');
         self::assertSelectorNotExists('a[href="/admin"]');
-        self::assertSelectorNotExists('a[href="/deconnexion"]');
+        self::assertSelectorNotExists('form[action="/deconnexion"]');
 
         $this->client->loginUser($this->createAdmin());
         $this->client->request('GET', '/');
@@ -45,9 +45,37 @@ class SecurityTest extends AdminWebTestCase
         self::assertSelectorTextContains('body', 'Connecté');
         self::assertSelectorTextContains('body', 'Admin');
         self::assertSelectorExists('a[href="/admin"]');
-        self::assertSelectorExists('a[href="/deconnexion"]');
+        self::assertSelectorExists('form[action="/deconnexion"]');
         // Le lien de connexion n'a plus de raison d'etre : le bandeau le remplace.
         self::assertSelectorTextNotContains('body', 'Espace bénévoles');
+    }
+
+    /**
+     * Turbo 8 precharge en GET tout lien survole. Tant que « Se deconnecter »
+     * etait un lien, le survoler en allant du site a la gestion fermait la
+     * session : c'etaient les deconnexions intempestives des benevoles.
+     */
+    public function testAPrefetchOfTheLogoutAddressDoesNotLogOut(): void
+    {
+        $this->client->loginUser($this->createAdmin());
+
+        $this->client->request('GET', '/deconnexion', server: ['HTTP_X_SEC_PURPOSE' => 'prefetch']);
+        self::assertResponseStatusCodeSame(405);
+
+        $this->client->request('GET', '/admin');
+        self::assertResponseIsSuccessful();
+    }
+
+    public function testTheLogoutButtonLogsOut(): void
+    {
+        $this->client->loginUser($this->createAdmin());
+
+        $crawler = $this->client->request('GET', '/admin');
+        $this->client->submit($crawler->selectButton('Se déconnecter')->form());
+        self::assertResponseRedirects('/');
+
+        $this->client->request('GET', '/admin');
+        self::assertResponseRedirects('/connexion');
     }
 
     public function testWrongPasswordIsRejected(): void

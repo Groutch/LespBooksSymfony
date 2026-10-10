@@ -18,7 +18,11 @@
                        class="rounded-xs bg-paper px-2.5 py-1 font-medium text-ink hover:bg-surface">
                         Gestion
                     </a>
-                    <a href="{{ path('app_logout') }}" class="text-line hover:text-paper">Se déconnecter</a>
+                    {#- Formulaire et non lien : voir security.yaml (prechargement Turbo). -#}
+                    <form method="post" action="{{ path('app_logout') }}">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+                        <button type="submit" class="cursor-pointer text-line hover:text-paper">Se déconnecter</button>
+                    </form>
                 </span>
             </div>
         </div>

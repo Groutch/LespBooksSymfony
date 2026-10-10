@@ -23,9 +23,15 @@ security:
                 check_path: app_login
                 enable_csrf: true
                 default_target_path: admin_dashboard
+            # POST avec jeton, jamais un lien : Turbo 8 precharge en GET tout lien
+            # survole a la souris, et un simple lien vers /deconnexion fermait la
+            # session au passage du pointeur — les « deconnexions intempestives »
+            # en allant du site a la gestion. Le jeton « logout » est sans etat
+            # (csrf.yaml) : il ne depend pas de la session qu'il sert a fermer.
             logout:
                 path: app_logout
                 target: home
+                enable_csrf: true
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 604800

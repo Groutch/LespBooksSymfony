@@ -59,9 +59,14 @@
                 <a href="{{ path('home') }}" class="shrink-0 px-2.5 py-1.5 whitespace-nowrap text-ink-muted hover:text-accent">
                     Voir le site
                 </a>
-                <a href="{{ path('app_logout') }}" class="shrink-0 px-2.5 py-1.5 whitespace-nowrap text-ink-muted hover:text-accent">
-                    Se déconnecter
-                </a>
+                {#- Un formulaire et non un lien : Turbo precharge les liens survoles,
+                    et un GET sur /deconnexion fermait la session (security.yaml). -#}
+                <form method="post" action="{{ path('app_logout') }}" class="shrink-0">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+                    <button type="submit" class="cursor-pointer px-2.5 py-1.5 whitespace-nowrap text-ink-muted hover:text-accent">
+                        Se déconnecter
+                    </button>
+                </form>
             </nav>
         </div>
     </header>

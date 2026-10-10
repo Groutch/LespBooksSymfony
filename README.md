@@ -244,7 +244,7 @@ tests/                      PHPUnit, sur une vraie base MySQL `app_test`
 | `legal_notice` | GET | `/mentions-legales` | Mentions légales |
 | `privacy_policy` | GET | `/confidentialite` | Données conservées et droits |
 | `app_login` | GET, POST | `/connexion` | Connexion (CSRF, « Rester connecté » 7 jours) |
-| `app_logout` | GET | `/deconnexion` | Déconnexion, retour à l'accueil |
+| `app_logout` | **POST** | `/deconnexion` | Déconnexion (CSRF), retour à l'accueil. Jamais un lien : Turbo précharge les liens survolés, et un `GET` fermait la session. |
 | `admin_dashboard` | GET | `/admin` | Tableau de bord |
 | `admin_book_index` | GET | `/admin/livres` | Liste et recherche |
 | `admin_book_scan` | GET | `/admin/livres/scanner` | Scanner |

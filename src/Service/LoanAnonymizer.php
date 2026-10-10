@@ -14,9 +14,9 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * Pas de tâche planifiée : l'hébergement mutualisé n'en exécute que si on la
  * configure à la main, et un oubli y garderait les noms indéfiniment sans que
  * personne s'en aperçoive. Le ménage se fait donc à l'ouverture du tableau de
- * bord, page d'accueil de l'application installée, et de la liste des prêts,
- * seul écran qui affiche des prêts rendus. Une requête, presque toujours sans
- * ligne à modifier.
+ * bord, page d'accueil de l'application installée, et des deux écrans qui
+ * affichent des prêts rendus : la liste des prêts et la fiche d'un livre. Une
+ * requête, presque toujours sans ligne à modifier.
  */
 class LoanAnonymizer
 {

@@ -25,7 +25,8 @@ class CategoryLifecycleTest extends AdminWebTestCase
             'book[categoriesText]' => 'Science-fiction, Aventure',
         ]));
 
-        self::assertResponseRedirects('/admin/livres');
+        $book = $this->entityManager->getRepository(Book::class)->findOneBy(['title' => 'Dune']);
+        self::assertResponseRedirects('/admin/livres/'.$book->getId());
         self::assertCount(2, $this->entityManager->getRepository(Category::class)->findAll());
     }
 
@@ -48,7 +49,8 @@ class CategoryLifecycleTest extends AdminWebTestCase
             'book[categoriesText]' => 'science fiction',
         ]));
 
-        self::assertResponseRedirects('/admin/livres');
+        $book = $this->entityManager->getRepository(Book::class)->findOneBy(['title' => 'Fondation']);
+        self::assertResponseRedirects('/admin/livres/'.$book->getId());
 
         $categories = $this->entityManager->getRepository(Category::class)->findAll();
         self::assertCount(1, $categories, 'Un libellé proche ne doit pas créer de jumelle.');
@@ -80,7 +82,8 @@ class CategoryLifecycleTest extends AdminWebTestCase
             'book[categoriesText]' => 'Science-fiction',
         ]));
 
-        self::assertResponseRedirects('/admin/livres');
+        // Retour a la fiche, d'ou l'on etait parti pour modifier.
+        self::assertResponseRedirects('/admin/livres/'.$book->getId());
 
         $this->entityManager->clear();
         $restantes = $this->entityManager->getRepository(Category::class)->findAll();

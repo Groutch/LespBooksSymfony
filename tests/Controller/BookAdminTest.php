@@ -6,6 +6,8 @@ namespace App\Tests\Controller;
 
 use App\Entity\Book;
 use App\Entity\Category;
+use App\Entity\Genre;
+use App\Entity\Loan;
 use App\Tests\AdminWebTestCase;
 
 class BookAdminTest extends AdminWebTestCase
@@ -75,7 +77,8 @@ class BookAdminTest extends AdminWebTestCase
         $data = json_decode((string) $this->client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
 
         self::assertSame('Germinal', $data['existing']['title']);
-        self::assertSame('/admin/livres/'.$book->getId().'/modifier', $data['existing']['url']);
+        // Sa fiche, d'ou l'on peut le preter aussitot.
+        self::assertSame('/admin/livres/'.$book->getId(), $data['existing']['url']);
     }
 
     public function testIsbnCheckRejectsAnInvalidCode(): void
@@ -101,13 +104,64 @@ class BookAdminTest extends AdminWebTestCase
             'book[isbn13]' => '9782253004226',
         ]));
 
-        self::assertResponseRedirects('/admin/livres');
-
         $book = $this->entityManager->getRepository(Book::class)->findOneBy(['title' => 'Le Mystère de la chambre jaune']);
 
         self::assertNotNull($book);
+        // Sur sa fiche, pour relire ce qui vient d'etre enregistre.
+        self::assertResponseRedirects('/admin/livres/'.$book->getId());
         self::assertSame('Gaston Leroux', $book->getAuthorNames());
         self::assertCount(2, $book->getCategories());
+    }
+
+    /**
+     * La fiche recapitulative : ou est le livre, s'il est prete, a qui, et son
+     * historique. C'est la que mene le scan d'un livre deja au catalogue.
+     */
+    public function testTheBookSheetSummarizesTheBookAndItsLoans(): void
+    {
+        $rayon = (new Genre())->setName('Policier')->setSlug('policier');
+        $book = (new Book())->setTitle('Le Chien jaune')->setGenre($rayon)->setShelfLocation('étagère 2')
+            ->setIsbn13('9782253142256');
+        $ancien = (new Loan())->setBorrowerFirstName('Marie')->setBorrowerLastName('Curie')
+            ->setBorrowedAt(new \DateTimeImmutable('today -20 days'))
+            ->setReturnedAt(new \DateTimeImmutable('today -10 days'));
+        $enCours = (new Loan())->setBorrowerFirstName('Jean')->setBorrowerLastName('Martin')
+            ->setBorrowedAt(new \DateTimeImmutable('today -2 days'))
+            ->setDueAt(new \DateTimeImmutable('today +26 days'));
+        $book->addLoan($ancien)->addLoan($enCours);
+
+        foreach ([$rayon, $book, $ancien, $enCours] as $entite) {
+            $this->entityManager->persist($entite);
+        }
+        $this->entityManager->flush();
+
+        $this->client->loginUser($this->createAdmin());
+        $this->entityManager->clear();
+        $this->client->request('GET', '/admin/livres/'.$book->getId());
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('h1', 'Le Chien jaune');
+        self::assertSelectorTextContains('main', 'Prêté à Jean Martin');
+        self::assertSelectorExists('form[action="/admin/prets/'.$enCours->getId().'/rendre"]');
+        self::assertSelectorTextContains('a[href="/admin/livres?genre=policier"]', 'Policier');
+        self::assertSelectorTextContains('main', 'étagère 2');
+        self::assertSelectorTextContains('main', '9782253142256');
+        self::assertSelectorTextContains('section', 'Marie Curie');
+        self::assertSelectorExists('a[href="/livre/'.$book->getId().'"]');
+    }
+
+    public function testAnAvailableBookCanBeLentFromItsSheet(): void
+    {
+        $book = (new Book())->setTitle('Germinal');
+        $this->entityManager->persist($book);
+        $this->entityManager->flush();
+
+        $this->client->loginUser($this->createAdmin());
+        $this->client->request('GET', '/admin/livres/'.$book->getId());
+
+        self::assertSelectorTextContains('main', 'Disponible');
+        self::assertSelectorTextContains('a[href="/admin/prets/livre/'.$book->getId().'/nouveau"]', 'Prêter ce livre');
+        self::assertSelectorTextContains('main', 'jamais été prêté');
     }
 
     public function testSimilarCategoryIsReusedInsteadOfDuplicated(): void

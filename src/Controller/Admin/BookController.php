@@ -15,10 +15,12 @@ use App\Service\Catalog\BookImporter;
 use App\Service\Catalog\CatalogSearch;
 use App\Service\Catalog\CategoryResolver;
 use App\Service\IsbnNormalizer;
+use App\Service\LoanAnonymizer;
 use App\Service\Metadata\BookMetadata;
 use App\Service\Metadata\MetadataFetcher;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -55,6 +57,27 @@ class BookController extends AbstractController
     }
 
     /**
+     * Fiche recapitulative : tout ce qu'on sait du livre, son pret en cours et
+     * son historique, avec les actions qui s'y rapportent. C'est la que mene le
+     * scan d'un livre deja au catalogue : preter devient « scanner, puis Preter ».
+     */
+    #[Route('/{id}', name: 'admin_book_show', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function show(
+        Book $book,
+        LoanAnonymizer $loanAnonymizer,
+        #[Autowire('%app.default_loan_days%')] int $defaultLoanDays,
+    ): Response {
+        // L'historique des prets s'affiche ici : les noms echus doivent etre
+        // effaces avant qu'il soit charge (la collection est paresseuse).
+        $loanAnonymizer->anonymizeExpired();
+
+        return $this->render('admin/book/show.html.twig', [
+            'book' => $book,
+            'defaultLoanDays' => $defaultLoanDays,
+        ]);
+    }
+
+    /**
      * Dit seulement si l'ISBN est déjà au catalogue. Aucune source externe.
      *
      * Le scanner n'a pas besoin des métadonnées : il redirige soit vers la fiche
@@ -81,7 +104,7 @@ class BookController extends AbstractController
             'existing' => null === $existing ? null : [
                 'id' => $existing->getId(),
                 'title' => $existing->getTitle(),
-                'url' => $this->generateUrl('admin_book_edit', ['id' => $existing->getId()]),
+                'url' => $this->generateUrl('admin_book_show', ['id' => $existing->getId()]),
             ],
         ]);
     }
@@ -112,7 +135,7 @@ class BookController extends AbstractController
             'existing' => null === $existing ? null : [
                 'id' => $existing->getId(),
                 'title' => $existing->getTitle(),
-                'url' => $this->generateUrl('admin_book_edit', ['id' => $existing->getId()]),
+                'url' => $this->generateUrl('admin_book_show', ['id' => $existing->getId()]),
             ],
             'book' => null === $metadata ? null : [
                 'title' => $metadata->title,
@@ -161,7 +184,13 @@ class BookController extends AbstractController
 
             $this->addFlash('success', \sprintf('« %s » a été ajouté au catalogue.', $book->getTitle()));
 
-            return $this->redirectToRoute($request->request->has('saveAndScan') ? 'admin_book_scan' : 'admin_book_index');
+            if ($request->request->has('saveAndScan')) {
+                return $this->redirectToRoute('admin_book_scan');
+            }
+
+            // Sur sa fiche : on y relit ce qui vient d'etre enregistre, et on
+            // peut le preter aussitot.
+            return $this->redirectToRoute('admin_book_show', ['id' => $book->getId()]);
         }
 
         return $this->render('admin/book/new.html.twig', [
@@ -194,7 +223,8 @@ class BookController extends AbstractController
 
             $this->addFlash('success', 'Les modifications ont été enregistrées.');
 
-            return $this->redirectToRoute('admin_book_index');
+            // Retour a la fiche, d'ou l'on est parti pour modifier.
+            return $this->redirectToRoute('admin_book_show', ['id' => $book->getId()]);
         }
 
         return $this->render('admin/book/edit.html.twig', [

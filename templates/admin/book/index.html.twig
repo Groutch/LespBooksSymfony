@@ -33,7 +33,7 @@
                 {% endif %}
 
                 <div class="min-w-0 flex-1">
-                    <p class="truncate font-medium">{{ book.title }}</p>
+                    <a href="{{ path('admin_book_show', {id: book.id}) }}" class="block truncate font-medium hover:text-accent">{{ book.title }}</a>
                     <p class="truncate text-sm text-ink-muted">
                         {{ book.authorNames|default('Auteur inconnu') }}
                         {% if book.publishedYear %} · <span class="tabular">{{ book.publishedYear }}</span>{% endif %}
@@ -63,6 +63,8 @@
                     {% else %}
                         <form method="post" action="{{ path('admin_loan_return', {id: book.activeLoan.id}) }}">
                             <input type="hidden" name="_token" value="{{ csrf_token('rendre-pret-' ~ book.activeLoan.id) }}">
+                            {#- On reste sur la liste, filtres compris (LoanController::redirectBack()). -#}
+                            <input type="hidden" name="retour" value="{{ app.request.requestUri }}">
                             <button type="submit" class="btn btn-ghost px-3 text-sm">Rendre</button>
                         </form>
                     {% endif %}

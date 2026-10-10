@@ -1,0 +1,162 @@
+{% extends 'admin/layout.html.twig' %}
+
+{#- Fiche recapitulative d'un livre : ce qu'on sait de lui, ou il est, s'il est
+    prete, et ce qu'on peut en faire. Le scan d'un livre deja au catalogue mene
+    ici : l'etat du pret et son action viennent donc juste sous le titre. -#}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block admin_content %}
+{% set pret = book.activeLoan %}
+
+{#- La couverture reste une vignette a cote du titre : en pleine largeur, elle
+    repoussait sous la ligne de flottaison l'etat du pret et son bouton, soit
+    precisement ce qu'on vient chercher apres un scan. -#}
+<div class="flex items-start gap-4 sm:gap-6">
+    <div class="w-24 shrink-0 sm:w-36">
+        {% if book.primaryImage and book.primaryImage.imageName %}
+            <img src="{{ vich_uploader_asset(book.primaryImage, 'imageFile') }}" alt="Couverture de {{ book.title }}"
+                 class="aspect-2/3 w-full rounded-xs bg-surface-sunk object-cover shadow-cover-lg">
+        {% else %}
+            <div class="flex aspect-2/3 w-full items-center justify-center rounded-xs bg-surface-sunk p-2 text-center font-display text-xs text-ink-muted shadow-cover">
+                {{ book.title }}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="min-w-0">
+        <h1 class="font-display text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{{ book.title }}</h1>
+        {% if book.subtitle %}
+            <p class="mt-1 font-display text-lg text-ink-muted">{{ book.subtitle }}</p>
+        {% endif %}
+        <p class="mt-2">{{ book.authorNames|default('Auteur inconnu') }}</p>
+    </div>
+</div>
+
+<div class="max-w-3xl">
+    {% if pret %}
+        <div class="alert mt-5 border-warning-line bg-warning-wash text-warning">
+            <p class="font-medium">Prêté à {{ pret.borrowerName }}</p>
+            <p class="mt-0.5 text-sm">
+                depuis le <time datetime="{{ pret.borrowedAt|date('Y-m-d') }}">{{ pret.borrowedAt|date('d/m/Y') }}</time>
+                {%- if pret.dueAt %}, retour prévu le <time datetime="{{ pret.dueAt|date('Y-m-d') }}">{{ pret.dueAt|date('d/m/Y') }}</time>
+                    {%- if pret.overdue %} — <strong class="font-medium">en retard</strong>{% endif %}
+                {%- else %}, sans échéance{% endif %}.
+            </p>
+            {% if pret.notes %}
+                <p class="mt-1 text-sm italic">{{ pret.notes }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+            <form method="post" action="{{ path('admin_loan_return', {id: pret.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('rendre-pret-' ~ pret.id) }}">
+                <input type="hidden" name="retour" value="{{ app.request.requestUri }}">
+                <button type="submit" class="btn btn-primary">Rendre</button>
+            </form>
+            <form method="post" action="{{ path('admin_loan_extend', {id: pret.id}) }}" class="flex items-center gap-2">
+                <input type="hidden" name="_token" value="{{ csrf_token('prolonger-pret-' ~ pret.id) }}">
+                <input type="hidden" name="retour" value="{{ app.request.requestUri }}">
+                <label for="echeance" class="sr-only">Nouvelle échéance</label>
+                <input id="echeance" type="date" name="dueAt"
+                       value="{{ (pret.dueAt ?? date())|date_modify('+' ~ defaultLoanDays ~ ' days')|date('Y-m-d') }}"
+                       class="field w-auto">
+                <button type="submit" class="btn btn-ghost">Prolonger</button>
+            </form>
+        </div>
+    {% else %}
+        <p class="alert alert-success mt-5"><strong class="font-medium">Disponible</strong></p>
+        <div class="mt-3">
+            <a href="{{ path('admin_loan_new', {id: book.id}) }}" class="btn btn-primary">Prêter ce livre</a>
+        </div>
+    {% endif %}
+
+    {#- Le rayon dit quel meuble, la position ou se baisser une fois devant. Le
+        rayon mene a la liste de ses livres, comme depuis l'ecran des rayons. -#}
+    {% if book.genre or book.shelfLocation %}
+        <p class="mt-6 text-xs font-medium uppercase tracking-wider text-ink-faint">Où le trouver</p>
+        <p class="mt-1.5 flex flex-wrap items-center gap-2">
+            {% if book.genre %}
+                <a href="{{ path('admin_book_index', {genre: book.genre.slug}) }}" class="chip hover:border-accent hover:text-accent">{{ book.genre.name }}</a>
+            {% endif %}
+            {% if book.shelfLocation %}
+                <span class="text-sm text-ink-muted">{{ book.shelfLocation }}</span>
+            {% endif %}
+        </p>
+    {% else %}
+        <p class="mt-6 text-sm text-ink-muted">
+            Pas encore de rayon :
+            <a href="{{ path('admin_book_edit', {id: book.id}) }}" class="text-accent underline underline-offset-2 hover:no-underline">le ranger</a>.
+        </p>
+    {% endif %}
+
+    {% if book.categories is not empty %}
+        <p class="mt-5 text-xs font-medium uppercase tracking-wider text-ink-faint">Thèmes</p>
+        <p class="mt-1.5 flex flex-wrap gap-1.5">
+            {% for category in book.categories %}
+                <a href="{{ path('admin_book_index', {categorie: category.slug}) }}" class="chip hover:border-accent hover:text-accent">{{ category.name }}</a>
+            {% endfor %}
+        </p>
+    {% endif %}
+
+    {% set details = [
+        ['ISBN-13', book.isbn13],
+        ['ISBN-10', book.isbn10],
+        ['Éditeur', book.publisher],
+        ['Année', book.publishedYear],
+        ['Pages', book.pageCount],
+        ['Langue', book.language],
+    ]|filter(ligne => ligne[1]) %}
+    <dl class="mt-6 grid grid-cols-2 border-t border-line sm:grid-cols-3">
+        {% for ligne in details %}
+            <div class="border-b border-line py-2.5 pr-4">
+                <dt class="text-xs uppercase tracking-wider text-ink-faint">{{ ligne[0] }}</dt>
+                <dd class="mt-0.5 text-sm tabular">{{ ligne[1] }}</dd>
+            </div>
+        {% endfor %}
+        <div class="border-b border-line py-2.5 pr-4">
+            <dt class="text-xs uppercase tracking-wider text-ink-faint">Ajouté le</dt>
+            <dd class="mt-0.5 text-sm">
+                <time datetime="{{ book.createdAt|date('Y-m-d') }}" class="tabular">{{ book.createdAt|date('d/m/Y') }}</time>
+                {%- if book.createdBy %} par {{ book.createdBy.displayName }}{% endif %}
+            </dd>
+        </div>
+    </dl>
+
+    {% if book.description %}
+        <p class="mt-6 max-w-[62ch] whitespace-pre-line leading-relaxed">{{ book.description }}</p>
+    {% endif %}
+
+    <div class="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
+        <a href="{{ path('admin_book_edit', {id: book.id}) }}" class="btn btn-ghost">Modifier</a>
+        <a href="{{ path('catalog_book', {id: book.id}) }}" class="text-sm text-accent underline underline-offset-2 hover:no-underline">
+            Voir sa page sur le site public
+        </a>
+    </div>
+</div>
+
+{#- Les noms des prets rendus depuis plus de trois mois sont effaces avant
+    l'affichage (LoanAnonymizer, appele par le controleur). -#}
+<section class="mt-10" aria-labelledby="titre-historique">
+    <h2 id="titre-historique" class="font-display text-xl font-semibold tracking-tight">Historique des prêts</h2>
+    {% if book.loans is empty %}
+        <p class="mt-2 text-ink-muted">Ce livre n'a encore jamais été prêté.</p>
+    {% else %}
+        <ul class="surface mt-4 divide-y divide-line">
+            {% for loan in book.loans %}
+                <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-3 text-sm">
+                    <span class="font-medium">{{ loan.anonymized ? 'Nom effacé' : loan.borrowerName }}</span>
+                    <span class="text-ink-muted">
+                        du <time datetime="{{ loan.borrowedAt|date('Y-m-d') }}" class="tabular">{{ loan.borrowedAt|date('d/m/Y') }}</time>
+                        {% if loan.returnedAt %}
+                            au <time datetime="{{ loan.returnedAt|date('Y-m-d') }}" class="tabular">{{ loan.returnedAt|date('d/m/Y') }}</time>
+                        {% else %}
+                            — <span class="font-medium text-warning">en cours</span>
+                        {% endif %}
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</section>
+{% endblock %}

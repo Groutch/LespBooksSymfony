@@ -38,8 +38,12 @@ Ouvert à tous, sans compte.
 
 Réservé aux comptes `ROLE_ADMIN`. L'interface dit « Gestion »
 - **Scanner** un livre avec la caméra du téléphone (EAN-13), ou saisir l'ISBN à la main. Un livre
-  déjà présent ouvre sa fiche ; un livre inconnu ouvre le formulaire, qui se remplit tout seul à
-  partir de Google Books, OpenLibrary et la BnF. On enregistre, puis on passe au livre suivant.
+  déjà présent ouvre sa fiche, d'où l'on peut le prêter ou le rendre ; un livre inconnu ouvre le
+  formulaire, qui se remplit tout seul à partir de Google Books, OpenLibrary et la BnF. On
+  enregistre, puis on passe au livre suivant.
+- **Fiche d'un livre** (`/admin/livres/{id}`) : couverture, rayon et position, thèmes, détails,
+  prêt en cours avec Rendre et Prolonger (ou Prêter), historique des prêts, lien vers sa page
+  publique. On y arrive par le scan, depuis les listes, et après un ajout ou une modification.
 - **Livres** : la même recherche que le catalogue public, filtres compris (rayon, catégorie,
   année, disponibilité), avec le rayon et la position de chaque livre ; ajout sans ISBN,
   modification, remplacement de la couverture, suppression.
@@ -250,6 +254,7 @@ tests/                      PHPUnit, sur une vraie base MySQL `app_test`
 | `admin_dashboard` | GET | `/admin` | Tableau de bord |
 | `admin_book_index` | GET | `/admin/livres` | Liste et recherche : **mêmes paramètres** que `/catalogue` |
 | `admin_book_scan` | GET | `/admin/livres/scanner` | Scanner |
+| `admin_book_show` | GET | `/admin/livres/{id}` | Fiche récapitulative d'un livre |
 | `admin_book_check` | GET | `/admin/livres/verifier-isbn/{isbn}` | JSON : le livre est-il déjà au catalogue ? **Base seule.** |
 | `admin_book_lookup` | GET | `/admin/livres/recherche-isbn/{isbn}` | JSON : métadonnées issues des sources externes |
 | `admin_book_new` | GET, POST | `/admin/livres/nouveau?isbn=…` | Ajout |
@@ -260,8 +265,8 @@ tests/                      PHPUnit, sur une vraie base MySQL `app_test`
 | `admin_genre_delete` | POST | `/admin/rayons/{id}/supprimer` | Suppression (CSRF), les livres restent |
 | `admin_loan_index` | GET | `/admin/prets` | Prêts en cours et derniers retours |
 | `admin_loan_new` | GET, POST | `/admin/prets/livre/{id}/nouveau` | Prêter un livre |
-| `admin_loan_return` | POST | `/admin/prets/{id}/rendre` | Retour (CSRF) |
-| `admin_loan_extend` | POST | `/admin/prets/{id}/prolonger` | Prolongation (CSRF) |
+| `admin_loan_return` | POST | `/admin/prets/{id}/rendre` | Retour (CSRF). Revient à l'écran d'origine (champ `retour`, chemin `/admin…` seulement). |
+| `admin_loan_extend` | POST | `/admin/prets/{id}/prolonger` | Prolongation (CSRF), même retour |
 
 `security.yaml` ne protège que `^/admin` : tout le reste est public. `php bin/console debug:router`
 donne la liste à jour.

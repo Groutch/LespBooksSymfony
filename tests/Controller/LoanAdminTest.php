@@ -139,6 +139,32 @@ class LoanAdminTest extends AdminWebTestCase
         self::assertTrue($this->entityManager->getRepository(Loan::class)->find($loan->getId())->isAnonymized());
     }
 
+    /** Rendre depuis la fiche d'un livre y ramene, au lieu de la liste des prets. */
+    public function testReturningFromTheBookSheetComesBackToIt(): void
+    {
+        $book = $this->createBook('Le Horla');
+        $this->createLoan($book, dueAt: null);
+
+        $this->client->loginUser($this->createAdmin());
+        $crawler = $this->client->request('GET', '/admin/livres/'.$book->getId());
+        $this->client->submit($crawler->selectButton('Rendre')->form());
+
+        self::assertResponseRedirects('/admin/livres/'.$book->getId());
+    }
+
+    /** Le chemin de retour vient du navigateur : jamais une adresse hors de la gestion. */
+    public function testAReturnNeverRedirectsOutsideTheVolunteerArea(): void
+    {
+        $book = $this->createBook('Le Horla');
+        $this->createLoan($book, dueAt: null);
+
+        $this->client->loginUser($this->createAdmin());
+        $crawler = $this->client->request('GET', '/admin/livres/'.$book->getId());
+        $this->client->submit($crawler->selectButton('Rendre')->form(), ['retour' => 'https://exemple.invalid/admin']);
+
+        self::assertResponseRedirects('/admin/prets');
+    }
+
     public function testLoanScreenRejectsAnonymousVisitors(): void
     {
         $this->client->request('GET', '/admin/prets');

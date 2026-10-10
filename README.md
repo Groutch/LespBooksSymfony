@@ -45,7 +45,8 @@ Réservé aux comptes `ROLE_ADMIN`. L'interface dit « Gestion »
 - **Rayons** : création, renommage et suppression des rayons physiques (Roman, Policier,
   Jeunesse…). Supprimer un rayon conserve ses livres.
 - **Prêts** : prêter un livre (prénom, nom, date, échéance facultative, note), le rendre,
-  prolonger l'échéance. Le tableau de bord signale les prêts en retard.
+  prolonger l'échéance. Le tableau de bord signale les prêts en retard. Trois mois après le
+  retour du livre, le nom de l'emprunteur et la note sont effacés automatiquement.
 - **Application installable** (PWA) : `/admin` s'installe sur l'écran d'accueil d'un téléphone
   ou d'un ordinateur, avec un raccourci direct vers le scanner.
 
@@ -182,7 +183,8 @@ Elles se définissent dans `.env.local`, qui n'est jamais versionné.
 |---|---|---|
 | `app.category_similarity_threshold` | `0.85` | Seuil au-delà duquel une catégorie proposée rejoint une catégorie existante (0 = tout fusionner, 1 = égalité stricte) |
 | `app.default_loan_days` | `28` | Échéance proposée pour un nouveau prêt, et durée ajoutée par une prolongation sans date. « Infos pratiques » l'annonce aux habitants. |
-| `app.bibliotheque` | adresse, horaires, éditeur, directeur de la publication, hébergeur | Coordonnées publiques, exposées aux gabarits sous le nom `bibliotheque` (`twig.globals`). **Un horaire qui change se corrige ici, et nulle part ailleurs.** |
+| `app.borrower_retention_months` | `3` | Mois pendant lesquels le nom de l'emprunteur reste attaché à un prêt rendu. Annoncé sur `/confidentialite`. |
+| `app.bibliotheque` | adresse, horaires, courriel, éditeur, directeur de la publication, hébergeur | Coordonnées publiques, exposées aux gabarits sous le nom `bibliotheque` (`twig.globals`). **Un horaire qui change se corrige ici, et nulle part ailleurs.** |
 
 Ils sont injectés par `#[Autowire('%app.…%')]`.
 
@@ -218,6 +220,7 @@ src/
   Repository/               requêtes Doctrine
   Service/IsbnNormalizer    validation et conversion ISBN-10 / ISBN-13
   Service/TextNormalizer    slugs et score de similarité (déduplication)
+  Service/LoanAnonymizer    effacement du nom des emprunteurs, 3 mois après le retour
   Service/Metadata/         interrogation des sources externes
   Service/Catalog/          import, déduplication, téléchargement des couvertures
 templates/
@@ -439,6 +442,11 @@ Chacune est couverte par un test.
 - Un visiteur anonyme **ne reçoit aucun cookie**. La page de confidentialité l'affirme, et c'est
   ce qui dispense le site d'un bandeau de consentement : ne jamais démarrer de session sur une page
   publique, ni ajouter d'outil de mesure qui en dépose.
+- **Le nom et la note d'un emprunteur sont effacés 3 mois après le retour du livre**
+  (`app.borrower_retention_months`) ; le prêt reste, avec le livre et les dates. Faute de tâche
+  planifiée sur le mutualisé, `LoanAnonymizer` passe à chaque ouverture du tableau de bord et de
+  la liste des prêts, seul écran qui affiche des prêts rendus. Un nom effacé vaut `''` :
+  `Loan::isAnonymized()`.
 - **Un seul prêt actif par livre.**
 - Supprimer une catégorie ou un rayon **ne supprime jamais de livre**.
 - **Pas de catégories en double** : une catégorie proche d'une existante est réutilisée.

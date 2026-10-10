@@ -154,6 +154,16 @@ class Loan
         return null !== $this->returnedAt;
     }
 
+    /**
+     * Nom effacé après le délai de conservation (LoanRepository::anonymizeReturnedUpTo()).
+     * Le formulaire rend nom et prénom obligatoires : vides, ils ne peuvent
+     * venir que de cet effacement.
+     */
+    public function isAnonymized(): bool
+    {
+        return '' === $this->borrowerFirstName && '' === $this->borrowerLastName;
+    }
+
     public function isOverdue(): bool
     {
         if ($this->isReturned() || null === $this->dueAt) {

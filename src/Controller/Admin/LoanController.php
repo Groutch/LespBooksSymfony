@@ -8,6 +8,7 @@ use App\Entity\Book;
 use App\Entity\Loan;
 use App\Form\LoanType;
 use App\Repository\LoanRepository;
+use App\Service\LoanAnonymizer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -28,8 +29,12 @@ class LoanController extends AbstractController
     }
 
     #[Route('', name: 'admin_loan_index', methods: ['GET'])]
-    public function index(LoanRepository $loanRepository): Response
+    public function index(LoanRepository $loanRepository, LoanAnonymizer $loanAnonymizer): Response
     {
+        // Avant de charger les retours : seul cet ecran les affiche, aucun nom
+        // echu ne doit y apparaitre, meme si le tableau de bord n'a pas ete ouvert.
+        $loanAnonymizer->anonymizeExpired();
+
         return $this->render('admin/loan/index.html.twig', [
             'activeLoans' => $loanRepository->findActive(),
             'returnedLoans' => $loanRepository->findReturned(20),

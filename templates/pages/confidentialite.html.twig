@@ -45,8 +45,9 @@
                 voient : le site public indique seulement qu'un livre est emprunté, et jusqu'à quand.
             </li>
             <li>
-                Une fois le livre rendu, elles restent dans l'historique des prêts. Vous pouvez demander à tout
-                moment qu'elles soient effacées.
+                <strong class="font-medium">{{ retentionMonths }} mois après le retour du livre</strong>, votre
+                nom et la note sont effacés automatiquement : il ne reste que la trace du prêt (le livre et les
+                dates). Avant ce délai, vous pouvez demander qu'ils le soient.
             </li>
         </ul>
     </section>
@@ -70,8 +71,9 @@
         </p>
         <p class="mt-3">
             Vous pouvez consulter, faire corriger ou effacer les informations qui vous concernent, ou vous
-            opposer à leur traitement : adressez-vous aux bénévoles pendant les heures d'ouverture, ou à la
-            mairie. En cas de difficulté, vous pouvez adresser une réclamation à la CNIL
+            opposer à leur traitement : adressez-vous aux bénévoles pendant les heures d'ouverture, ou
+            écrivez à la mairie (<a href="mailto:{{ bibliotheque.courriel }}" class="text-accent underline underline-offset-2 hover:no-underline">{{ bibliotheque.courriel }}</a>).
+            En cas de difficulté, vous pouvez adresser une réclamation à la CNIL
             (<a href="https://www.cnil.fr" class="text-accent underline underline-offset-2 hover:no-underline">cnil.fr</a>).
         </p>
     </section>

@@ -14,7 +14,11 @@
 <dl class="mt-8 max-w-[62ch] divide-y divide-line border-y border-line">
     <div class="grid gap-1 py-4 sm:grid-cols-[14rem_1fr] sm:gap-4">
         <dt class="font-medium">Éditeur du site</dt>
-        <dd>{{ bibliotheque.editeur }}<br>{{ bibliotheque.adresse|join(', ') }}</dd>
+        <dd>
+            {{ bibliotheque.editeur }}<br>
+            {{ bibliotheque.adresse|join(', ') }}<br>
+            <a href="mailto:{{ bibliotheque.courriel }}" class="text-accent underline underline-offset-2 hover:no-underline">{{ bibliotheque.courriel }}</a>
+        </dd>
     </div>
     <div class="grid gap-1 py-4 sm:grid-cols-[14rem_1fr] sm:gap-4">
         <dt class="font-medium">Directeur de la publication</dt>

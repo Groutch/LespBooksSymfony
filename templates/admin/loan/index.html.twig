@@ -65,7 +65,8 @@
             <li class="px-4 py-3">
                 <p class="font-medium">{{ loan.book.title }}</p>
                 <p class="text-sm text-ink-muted">
-                    {{ loan.borrowerName }} — rendu le <time datetime="{{ loan.returnedAt|date('Y-m-d') }}">{{ loan.returnedAt|date('d/m/Y') }}</time>
+                    {#- Nom efface passe le delai de conservation (LoanAnonymizer). -#}
+                    {{ loan.anonymized ? 'Nom effacé' : loan.borrowerName }} — rendu le <time datetime="{{ loan.returnedAt|date('Y-m-d') }}">{{ loan.returnedAt|date('d/m/Y') }}</time>
                 </p>
             </li>
         {% endfor %}

@@ -82,6 +82,63 @@ class LoanAdminTest extends AdminWebTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
+    /**
+     * Promesse faite sur /confidentialite : trois mois apres le retour, nom et
+     * note disparaissent. Le pret reste, pour l'historique du livre.
+     */
+    public function testBorrowerNamesAreErasedThreeMonthsAfterTheReturn(): void
+    {
+        $ancien = $this->createLoan($this->createBook('Bel-Ami'), dueAt: null)
+            ->setBorrowedAt(new \DateTimeImmutable('today -4 months'))
+            ->setReturnedAt(new \DateTimeImmutable('today -3 months'))
+            ->setNotes('Rappeler au 06 12 34 56 78');
+        $recent = $this->createLoan($this->createBook('Nana'), dueAt: null)
+            ->setBorrowedAt(new \DateTimeImmutable('today -4 months'))
+            ->setReturnedAt(new \DateTimeImmutable('today -3 months +1 day'));
+        $enCours = $this->createLoan($this->createBook('Thérèse Raquin'), dueAt: null)
+            ->setBorrowedAt(new \DateTimeImmutable('today -1 year'));
+        $this->entityManager->flush();
+
+        $this->client->loginUser($this->createAdmin());
+        // Comme en production, la requete part d'un EntityManager vide : sinon
+        // Doctrine resservirait les prets deja en memoire, sans voir l'effacement
+        // fait en DQL.
+        $this->entityManager->clear();
+        $this->client->request('GET', '/admin/prets');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('main', 'Nom effacé');
+        self::assertSelectorTextNotContains('main', '06 12 34 56 78');
+
+        $this->entityManager->clear();
+        $prets = $this->entityManager->getRepository(Loan::class);
+
+        $ancien = $prets->find($ancien->getId());
+        self::assertTrue($ancien->isAnonymized());
+        self::assertNull($ancien->getNotes());
+        self::assertNotNull($ancien->getReturnedAt(), 'Le pret lui-meme est conserve.');
+
+        self::assertSame('Jean Martin', $prets->find($recent->getId())->getBorrowerName());
+        // Un pret en cours n'est jamais concerne, quelle que soit son anciennete.
+        self::assertSame('Jean Martin', $prets->find($enCours->getId())->getBorrowerName());
+    }
+
+    /** Page d'ouverture de l'application installee : le menage y passe aussi. */
+    public function testTheDashboardAlsoErasesExpiredNames(): void
+    {
+        $loan = $this->createLoan($this->createBook('Germinal'), dueAt: null)
+            ->setBorrowedAt(new \DateTimeImmutable('today -1 year'))
+            ->setReturnedAt(new \DateTimeImmutable('today -6 months'));
+        $this->entityManager->flush();
+
+        $this->client->loginUser($this->createAdmin());
+        $this->client->request('GET', '/admin');
+
+        self::assertResponseIsSuccessful();
+        $this->entityManager->clear();
+        self::assertTrue($this->entityManager->getRepository(Loan::class)->find($loan->getId())->isAnonymized());
+    }
+
     public function testLoanScreenRejectsAnonymousVisitors(): void
     {
         $this->client->request('GET', '/admin/prets');

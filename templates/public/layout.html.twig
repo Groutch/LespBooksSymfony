@@ -55,6 +55,9 @@
                 <p class="font-medium text-ink">Bibliothèque communautaire de Lespouey</p>
                 <address class="mt-1 not-italic">{{ bibliotheque.adresse|join(', ') }}</address>
                 <p class="mt-1">Ouverte {{ biblio.horaires_en_phrase(bibliotheque.horaires) }}.</p>
+                <p class="mt-1">
+                    <a href="mailto:{{ bibliotheque.courriel }}" class="underline underline-offset-2 hover:text-accent">{{ bibliotheque.courriel }}</a>
+                </p>
             </div>
             <nav class="flex flex-wrap items-start gap-x-5" aria-label="À propos du site">
                 <a href="{{ path('practical_info') }}" class="py-1 hover:text-accent">Infos pratiques</a>

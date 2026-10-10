@@ -27,6 +27,7 @@ class InfoPagesTest extends AdminWebTestCase
         self::assertSelectorTextContains('main', '16 h – 18 h 30');
         // Tiree de app.default_loan_days : la page dit ce que la gestion propose.
         self::assertSelectorTextContains('main', '4 semaines');
+        self::assertSelectorExists('main a[href="mailto:lespouey.mairie@wanadoo.fr"]');
     }
 
     public function testLegalNoticeNamesThePublisherThePublicationDirectorAndTheHost(): void
@@ -39,6 +40,7 @@ class InfoPagesTest extends AdminWebTestCase
         self::assertSelectorTextContains('main', 'Le maire de Lespouey');
         self::assertSelectorTextContains('main', 'OVH SAS');
         self::assertSelectorTextContains('main', '2 rue Kellermann, 59100 Roubaix');
+        self::assertSelectorExists('main a[href="mailto:lespouey.mairie@wanadoo.fr"]');
     }
 
     public function testPrivacyPolicyTellsBorrowersWhatIsKeptAndWhereToComplain(): void
@@ -48,6 +50,9 @@ class InfoPagesTest extends AdminWebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('main', 'votre prénom et votre nom');
         self::assertSelectorTextContains('main', 'aucun cookie');
+        // Tiree de app.borrower_retention_months, comme l'effacement reel (LoanAnonymizer).
+        self::assertSelectorTextContains('main', '3 mois après le retour du livre');
+        self::assertSelectorExists('main a[href="mailto:lespouey.mairie@wanadoo.fr"]');
         self::assertSelectorExists('main a[href="https://www.cnil.fr"]');
     }
 
@@ -60,6 +65,7 @@ class InfoPagesTest extends AdminWebTestCase
         $this->client->request('GET', '/catalogue');
         self::assertSelectorTextContains('footer', '35 rue des Pyrénées, 65190 Lespouey');
         self::assertSelectorTextContains('footer', 'le mardi de 9 h à 11 h 30');
+        self::assertSelectorExists('footer a[href="mailto:lespouey.mairie@wanadoo.fr"]');
 
         foreach (['/infos-pratiques', '/mentions-legales', '/confidentialite'] as $chemin) {
             self::assertSelectorExists(\sprintf('footer a[href="%s"]', $chemin));

@@ -84,9 +84,13 @@ class BookType extends AbstractType
                 'required' => false,
             ])
             ->add('coverFile', FileType::class, [
-                'label' => 'Couverture (remplace l\'image principale)',
+                'label' => 'Photo de couverture',
+                'help' => 'Prenez la couverture en photo, ou choisissez une image (JPEG, PNG ou WebP, 8 Mo au plus). Elle remplace la couverture actuelle.',
                 'required' => false,
                 'mapped' => false,
+                // Liste explicite plutot que image/* : l'iPhone convertit alors sa
+                // photo en JPEG a l'envoi, au lieu d'un HEIC que la contrainte refuse.
+                'attr' => ['accept' => 'image/jpeg,image/png,image/webp'],
                 'constraints' => [
                     new Image(maxSize: '8M', mimeTypes: ['image/jpeg', 'image/png', 'image/webp']),
                 ],

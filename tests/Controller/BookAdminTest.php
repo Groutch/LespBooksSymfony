@@ -25,6 +25,21 @@ class BookAdminTest extends AdminWebTestCase
     }
 
     /**
+     * Le champ fichier prenait la classe `field` des champs de saisie : fond
+     * blanc, bouton natif invisible. Il a desormais son propre habillage, et
+     * n'accepte que les formats que la contrainte Image laisse passer.
+     */
+    public function testTheCoverUploadButtonHasItsOwnStyle(): void
+    {
+        $this->client->loginUser($this->createAdmin());
+        $this->client->request('GET', '/admin/livres/nouveau');
+
+        self::assertSelectorExists('input[type="file"][accept="image/jpeg,image/png,image/webp"]');
+        self::assertSelectorExists('input[type="file"][class*="file:bg-accent-wash"]');
+        self::assertSelectorNotExists('input[type="file"].field');
+    }
+
+    /**
      * Le scanner ne doit interroger que la base : c'est ce qui evite de lancer
      * MetadataFetcher deux fois par livre, une fois pour rien.
      */

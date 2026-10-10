@@ -9,7 +9,14 @@
 </div>
 
 <p class="mt-1 text-sm text-ink-muted">
-    {{ genre.books|length }} livre{{ genre.books|length > 1 ? 's' }} rangé{{ genre.books|length > 1 ? 's' }} ici.
+    {% set nombre = genre.books|length %}
+    {% if nombre > 0 %}
+        <a href="{{ path('admin_book_index', {genre: genre.slug}) }}" class="text-accent hover:underline">
+            {{- nombre }} livre{{ nombre > 1 ? 's' }} rangé{{ nombre > 1 ? 's' }} ici
+        </a>.
+    {% else %}
+        Aucun livre rangé ici.
+    {% endif %}
 </p>
 
 {{ form_start(form, {attr: {class: 'surface mt-5 p-4'}}) }}

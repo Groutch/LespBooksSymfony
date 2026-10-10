@@ -8,11 +8,11 @@ use App\Entity\Book;
 use App\Entity\BookImage;
 use App\Entity\User;
 use App\Form\BookType;
-use App\Model\BookSearchCriteria;
 use App\Repository\BookRepository;
 use App\Repository\CategoryRepository;
 use App\Service\Catalog\AuthorResolver;
 use App\Service\Catalog\BookImporter;
+use App\Service\Catalog\CatalogSearch;
 use App\Service\Catalog\CategoryResolver;
 use App\Service\IsbnNormalizer;
 use App\Service\Metadata\BookMetadata;
@@ -38,21 +38,14 @@ class BookController extends AbstractController
     ) {
     }
 
+    /**
+     * Mêmes filtres que le catalogue public (rayon, catégorie, année,
+     * disponibilité) : les bénévoles y cherchaient en vain « Affiner la recherche ».
+     */
     #[Route('', name: 'admin_book_index', methods: ['GET'])]
-    public function index(
-        BookRepository $bookRepository,
-        #[MapQueryParameter] ?string $q = null,
-        #[MapQueryParameter] int $page = 1,
-    ): Response {
-        $criteria = new BookSearchCriteria(query: $q, page: $page);
-        $paginator = $bookRepository->search($criteria);
-
-        return $this->render('admin/book/index.html.twig', [
-            'books' => $paginator,
-            'total' => \count($paginator),
-            'criteria' => $criteria,
-            'pageCount' => (int) ceil(\count($paginator) / BookSearchCriteria::PER_PAGE),
-        ]);
+    public function index(Request $request, CatalogSearch $catalogSearch): Response
+    {
+        return $this->render('admin/book/index.html.twig', $catalogSearch->fromQuery($request->query));
     }
 
     #[Route('/scanner', name: 'admin_book_scan', methods: ['GET'])]

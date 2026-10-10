@@ -40,10 +40,11 @@ Réservé aux comptes `ROLE_ADMIN`. L'interface dit « Gestion »
 - **Scanner** un livre avec la caméra du téléphone (EAN-13), ou saisir l'ISBN à la main. Un livre
   déjà présent ouvre sa fiche ; un livre inconnu ouvre le formulaire, qui se remplit tout seul à
   partir de Google Books, OpenLibrary et la BnF. On enregistre, puis on passe au livre suivant.
-- **Livres** : recherche, ajout sans ISBN, modification, remplacement de la couverture,
-  suppression.
+- **Livres** : la même recherche que le catalogue public, filtres compris (rayon, catégorie,
+  année, disponibilité), avec le rayon et la position de chaque livre ; ajout sans ISBN,
+  modification, remplacement de la couverture, suppression.
 - **Rayons** : création, renommage et suppression des rayons physiques (Roman, Policier,
-  Jeunesse…). Supprimer un rayon conserve ses livres.
+  Jeunesse…). Chaque rayon mène à la liste de ses livres. Supprimer un rayon conserve ses livres.
 - **Prêts** : prêter un livre (prénom, nom, date, échéance facultative, note), le rendre,
   prolonger l'échéance. Le tableau de bord signale les prêts en retard. Trois mois après le
   retour du livre, le nom de l'emprunteur et la note sont effacés automatiquement.
@@ -222,7 +223,8 @@ src/
   Service/TextNormalizer    slugs et score de similarité (déduplication)
   Service/LoanAnonymizer    effacement du nom des emprunteurs, 3 mois après le retour
   Service/Metadata/         interrogation des sources externes
-  Service/Catalog/          import, déduplication, téléchargement des couvertures
+  Service/Catalog/          import, déduplication, téléchargement des couvertures,
+                            CatalogSearch (page de résultats, publique ou de gestion)
 templates/
   base.html.twig            squelette commun
   public/, home/, catalog/  site public (public/_bibliotheque : horaires mis en phrase)
@@ -246,7 +248,7 @@ tests/                      PHPUnit, sur une vraie base MySQL `app_test`
 | `app_login` | GET, POST | `/connexion` | Connexion (CSRF, « Rester connecté » 7 jours) |
 | `app_logout` | **POST** | `/deconnexion` | Déconnexion (CSRF), retour à l'accueil. Jamais un lien : Turbo précharge les liens survolés, et un `GET` fermait la session. |
 | `admin_dashboard` | GET | `/admin` | Tableau de bord |
-| `admin_book_index` | GET | `/admin/livres` | Liste et recherche |
+| `admin_book_index` | GET | `/admin/livres` | Liste et recherche : **mêmes paramètres** que `/catalogue` |
 | `admin_book_scan` | GET | `/admin/livres/scanner` | Scanner |
 | `admin_book_check` | GET | `/admin/livres/verifier-isbn/{isbn}` | JSON : le livre est-il déjà au catalogue ? **Base seule.** |
 | `admin_book_lookup` | GET | `/admin/livres/recherche-isbn/{isbn}` | JSON : métadonnées issues des sources externes |

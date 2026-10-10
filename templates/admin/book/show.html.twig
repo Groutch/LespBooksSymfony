@@ -1,4 +1,5 @@
 {% extends 'admin/layout.html.twig' %}
+{% set retour = {url: path('admin_book_index'), libelle: 'Livres'} %}
 
 {#- Fiche recapitulative d'un livre : ce qu'on sait de lui, ou il est, s'il est
     prete, et ce qu'on peut en faire. Le scan d'un livre deja au catalogue mene

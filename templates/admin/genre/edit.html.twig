@@ -1,12 +1,10 @@
 {% extends 'admin/layout.html.twig' %}
+{% set retour = {url: path('admin_genre_index'), libelle: 'Rayons'} %}
 
 {% block title %}Rayon « {{ genre.name }} »{% endblock %}
 
 {% block admin_content %}
-<div class="flex flex-wrap items-baseline justify-between gap-4">
-    <h1 class="font-display text-2xl font-semibold tracking-tight">Rayon « {{ genre.name }} »</h1>
-    <a href="{{ path('admin_genre_index') }}" class="text-sm text-ink-muted hover:text-accent">Retour aux rayons</a>
-</div>
+<h1 class="font-display text-2xl font-semibold tracking-tight">Rayon « {{ genre.name }} »</h1>
 
 <p class="mt-1 text-sm text-ink-muted">
     {% set nombre = genre.books|length %}

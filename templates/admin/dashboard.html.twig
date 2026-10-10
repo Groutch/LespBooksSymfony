@@ -51,4 +51,22 @@
         {% endfor %}
     </ul>
 {% endif %}
+
+{#- Au telephone, la barre d'onglets ne porte que les sections : le site public et
+    la deconnexion se trouvent ici, loin du doigt qui passe d'un onglet a l'autre.
+    Sur ordinateur, l'en-tete les porte deja. -#}
+<section class="mt-10 sm:hidden" aria-labelledby="titre-session">
+    <h2 id="titre-session" class="text-xs font-medium uppercase tracking-wider text-ink-faint">
+        Connecté : {{ app.user.displayName|default('bénévole') }}
+    </h2>
+    <div class="surface mt-2 divide-y divide-line">
+        <a href="{{ path('home') }}" class="flex min-h-12 items-center px-4 text-sm hover:text-accent">Voir le site public</a>
+        <form method="post" action="{{ path('app_logout') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+            <button type="submit" class="flex min-h-12 w-full cursor-pointer items-center px-4 text-left text-sm text-ink-muted hover:text-accent">
+                Se déconnecter
+            </button>
+        </form>
+    </div>
+</section>
 {% endblock %}

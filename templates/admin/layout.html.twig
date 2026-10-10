@@ -1,5 +1,24 @@
 {% extends 'base.html.twig' %}
 
+{#- Icones de la navigation : traits de 24 px, couleur heritee du lien. -#}
+{% macro icone(nom) %}
+    <svg class="size-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        {%- if nom == 'accueil' -%}
+            <path d="M3 10.5 12 3l9 7.5"/><path d="M5 9v11h5v-6h4v6h5V9"/>
+        {%- elseif nom == 'livres' -%}
+            <path d="M5 4h3v16H5zM10.5 4h3v16h-3z"/><path d="m16 5.2 2.9-.7 3.1 15.2-2.9.7z"/>
+        {%- elseif nom == 'scanner' -%}
+            <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/>
+            <path d="M8 9v6M11 9v6M14 9v6M16.5 9v6"/>
+        {%- elseif nom == 'prets' -%}
+            <path d="M4 8h13l-3.5-3.5"/><path d="M20 16H7l3.5 3.5"/>
+        {%- elseif nom == 'rayons' -%}
+            <path d="M3 4h18M3 12h18M3 20h18"/><path d="M6 4v8M9 4v8M15 12v8M18 12v8"/>
+        {%- endif -%}
+    </svg>
+{% endmacro %}
+
 {% block theme_color %}#8c3a2b{% endblock %}
 
 {% block head_extra %}
@@ -13,35 +32,53 @@
 {% endblock %}
 
 {% block body %}
-{#- Une seule definition des sections, pour que l'etat actif ne se desynchronise pas. -#}
-{% set sections = [
-    {label: 'Livres',     route: 'admin_book_index',     prefixe: 'admin_book'},
-    {label: 'Rayons',     route: 'admin_genre_index',    prefixe: 'admin_genre'},
-    {label: 'Prêts',      route: 'admin_loan_index',     prefixe: 'admin_loan'}
-] %}
+{% import _self as ui %}
+{#- Une seule definition des sections, pour que l'etat actif ne se desynchronise
+    pas entre l'en-tete (ordinateur) et la barre d'onglets (telephone). `routes`
+    liste les ecrans qui allument chaque section. -#}
 {% set routeCourante = app.request.attributes.get('_route') %}
+{% set sections = [
+    {label: 'Accueil', route: 'admin_dashboard',   icone: 'accueil', routes: ['admin_dashboard']},
+    {label: 'Livres',  route: 'admin_book_index',  icone: 'livres',  routes: ['admin_book_index', 'admin_book_show', 'admin_book_edit']},
+    {label: 'Scanner', route: 'admin_book_scan',   icone: 'scanner', routes: ['admin_book_scan', 'admin_book_new']},
+    {label: 'Prêts',   route: 'admin_loan_index',  icone: 'prets',   routes: ['admin_loan_index', 'admin_loan_new']},
+    {label: 'Rayons',  route: 'admin_genre_index', icone: 'rayons',  routes: ['admin_genre_index', 'admin_genre_edit']},
+] %}
 
 <div class="min-h-screen">
-    {#- En-tete colle en haut : sa hauteur est donc du terrain perdu sur toutes les
-        pages. Deux rangees fixes valent mieux qu'un repli qui en produit trois sur
-        telephone. -#}
+    {#- En-tete colle en haut. Au telephone il ne porte plus que le retour, ou le
+        nom de l'espace : les sections sont descendues dans la barre du bas. -#}
     <header class="sticky top-0 z-10 border-b border-line bg-surface">
         <div class="mx-auto max-w-6xl px-5">
-            <div class="flex items-center justify-between gap-4 py-2.5">
-                <a href="{{ path('admin_dashboard') }}" class="font-display font-semibold tracking-tight whitespace-nowrap">
-                    Gestion
-                </a>
-                {#- L'action principale reste a portee de pouce, en bas a droite du
-                    bloc : on catalogue debout, une main sur l'etagere. -#}
-                <a href="{{ path('admin_book_scan') }}" class="btn btn-primary min-h-10 px-4 text-sm">Scanner</a>
+            <div class="flex min-h-14 items-center justify-between gap-4 py-1.5">
+                {#- Retour vers la page parente, et non vers l'historique : installee
+                    sur iPhone, l'application n'a aucun bouton retour du systeme, et
+                    l'on arrive souvent sur une page sans historique (scan, lien
+                    direct). Chaque sous-page designe son parent dans `retour`. -#}
+                {% if retour is defined %}
+                    <a href="{{ retour.url }}" aria-label="Retour : {{ retour.libelle }}"
+                       class="-ml-2 inline-flex min-h-11 min-w-0 items-center gap-1 rounded-xs px-2 text-ink-muted hover:text-accent">
+                        <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                        <span class="truncate">{{ retour.libelle }}</span>
+                    </a>
+                {% else %}
+                    <a href="{{ path('admin_dashboard') }}" class="font-display font-semibold tracking-tight whitespace-nowrap">
+                        Gestion
+                    </a>
+                {% endif %}
+
+                {#- Sur ordinateur seulement : au telephone, Scanner est au centre de
+                    la barre du bas. `hidden` vit sur l'enveloppe, car `btn` pose son
+                    propre display et les deux se disputeraient l'element. -#}
+                <div class="hidden shrink-0 sm:block">
+                    <a href="{{ path('admin_book_scan') }}" class="btn btn-primary min-h-10 px-4 text-sm">Scanner</a>
+                </div>
             </div>
 
-            {#- Defilement horizontal plutot que repli : la hauteur reste constante
-                quel que soit le nombre de sections. -#}
-            <nav class="-mx-5 flex items-center gap-1 overflow-x-auto px-5 pb-2 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                 aria-label="Sections de l'administration">
-                {% for section in sections %}
-                    {% set actif = routeCourante starts with section.prefixe %}
+            <nav class="hidden items-center gap-1 pb-2 text-sm sm:flex" aria-label="Sections de la gestion">
+                {% for section in sections|filter(s => s.icone != 'scanner') %}
+                    {% set actif = routeCourante in section.routes %}
                     <a href="{{ path(section.route) }}"
                        {{ actif ? 'aria-current="page"' }}
                        class="shrink-0 rounded-xs px-2.5 py-1.5 whitespace-nowrap
@@ -52,10 +89,6 @@
 
                 <span class="mx-1 h-4 w-px shrink-0 bg-line" aria-hidden="true"></span>
 
-                {#- Ces deux liens aboutissent a la meme page : la deconnexion redirige
-                    elle aussi vers l'accueil (security.yaml, target: home). Ce qui les
-                    distingue se lit donc la-bas, ou l'en-tete public affiche une pastille
-                    tant que la session est ouverte. -#}
                 <a href="{{ path('home') }}" class="shrink-0 px-2.5 py-1.5 whitespace-nowrap text-ink-muted hover:text-accent">
                     Voir le site
                 </a>
@@ -101,7 +134,8 @@
         </div>
     </div>
 
-    <main class="mx-auto max-w-6xl px-5 py-6 sm:py-8">
+    {#- Au telephone, le bas de page laisse la place a la barre d'onglets. -#}
+    <main class="mx-auto max-w-6xl px-5 pt-6 pb-28 sm:py-8">
         {% for label, messages in app.flashes(['success', 'error']) %}
             {% for message in messages %}
                 <div class="alert {{ label == 'success' ? 'alert-success' : 'alert-error' }} mb-5 text-sm">
@@ -112,5 +146,33 @@
 
         {% block admin_content %}{% endblock %}
     </main>
+
+    {#- Barre d'onglets du telephone : a portee de pouce, comme dans une
+        application. Scanner, le geste de chaque permanence, est au centre et en
+        couleur. La deconnexion n'y figure pas : elle est sur l'accueil, loin du
+        doigt qui passe d'un onglet a l'autre. -#}
+    <nav class="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] sm:hidden"
+         aria-label="Sections de la gestion">
+        <ul class="mx-auto grid max-w-md grid-cols-5">
+            {% for section in sections %}
+                {% set actif = routeCourante in section.routes %}
+                <li>
+                    <a href="{{ path(section.route) }}"
+                       {{ actif ? 'aria-current="page"' }}
+                       class="flex min-h-16 flex-col items-center justify-center gap-0.5 text-xs
+                              {{ actif ? 'font-medium text-accent' : 'text-ink-muted' }}">
+                        {% if section.icone == 'scanner' %}
+                            <span class="flex size-10 items-center justify-center rounded-full bg-accent text-surface shadow-cover">
+                                {{- ui.icone('scanner') -}}
+                            </span>
+                        {% else %}
+                            {{- ui.icone(section.icone) -}}
+                        {% endif %}
+                        {{ section.label }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </nav>
 </div>
 {% endblock %}

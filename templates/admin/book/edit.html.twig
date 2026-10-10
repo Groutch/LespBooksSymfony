@@ -1,13 +1,11 @@
 {% extends 'admin/layout.html.twig' %}
 {% import 'admin/book/_form_fields.html.twig' as fields %}
+{% set retour = {url: path('admin_book_show', {id: book.id}), libelle: book.title} %}
 
 {% block title %}Modifier « {{ book.title }} »{% endblock %}
 
 {% block admin_content %}
-<div class="flex flex-wrap items-baseline justify-between gap-4">
-    <h1 class="font-display text-2xl font-semibold tracking-tight">Modifier « {{ book.title }} »</h1>
-    <a href="{{ path('admin_book_show', {id: book.id}) }}" class="text-sm text-ink-muted hover:text-accent">Retour à la fiche</a>
-</div>
+<h1 class="font-display text-2xl font-semibold tracking-tight">Modifier « {{ book.title }} »</h1>
 
 {{ form_start(form, {attr: {class: 'surface mt-5 p-4'}}) }}
     {% if book.primaryImage and book.primaryImage.imageName %}

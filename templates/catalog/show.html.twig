@@ -28,7 +28,11 @@
 {% endblock %}
 
 {% block public_content %}
-<a href="{{ path('catalog_index') }}" class="text-sm text-ink-muted hover:text-accent">← Retour à la recherche</a>
+{#- Retour a la recherche telle qu'on l'a laissee, filtres et page compris : le
+    referent n'est repris que s'il s'agit bien du catalogue de ce site. -#}
+{% set referent = app.request.headers.get('referer') %}
+{% set retourRecherche = referent and referent starts with url('catalog_index') ? referent : path('catalog_index') %}
+<a href="{{ retourRecherche }}" class="text-sm text-ink-muted hover:text-accent">← Retour à la recherche</a>
 
 <div class="mt-6 grid gap-8 sm:grid-cols-[260px_1fr] sm:gap-10">
     <div>

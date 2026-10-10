@@ -1,5 +1,9 @@
 {% extends 'admin/layout.html.twig' %}
 {% import 'admin/book/_form_fields.html.twig' as fields %}
+{#- Arrive d'un scan, on y retourne (« Scanner un autre code ») ; sinon, a la liste. -#}
+{% set retour = prefillIsbn
+    ? {url: path('admin_book_scan'), libelle: 'Scanner'}
+    : {url: path('admin_book_index'), libelle: 'Livres'} %}
 
 {% block title %}Ajouter un livre{% endblock %}
 
@@ -8,10 +12,7 @@
      data-isbn-autofill-lookup-url-value="{{ path('admin_book_lookup', {isbn: '0000000000000'}) }}"
      data-isbn-autofill-isbn-value="{{ prefillIsbn ?? '' }}">
 
-    <div class="flex flex-wrap items-baseline justify-between gap-4">
-        <h1 class="font-display text-2xl font-semibold tracking-tight">Ajouter un livre</h1>
-        <a href="{{ path('admin_book_scan') }}" class="text-sm text-accent hover:underline">Scanner un autre code</a>
-    </div>
+    <h1 class="font-display text-2xl font-semibold tracking-tight">Ajouter un livre</h1>
 
     {% if prefillIsbn %}
         {#- Les trois sources repondent en 2 a 12 s. Le message discret d'avant se

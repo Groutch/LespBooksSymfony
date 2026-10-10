@@ -54,6 +54,10 @@ Réservé aux comptes `ROLE_ADMIN`. L'interface dit « Gestion »
   retour du livre, le nom de l'emprunteur et la note sont effacés automatiquement.
 - **Application installable** (PWA) : `/admin` s'installe sur l'écran d'accueil d'un téléphone
   ou d'un ordinateur, avec un raccourci direct vers le scanner.
+- **Navigation façon application** : au téléphone, une barre d'onglets en bas d'écran (Accueil,
+  Livres, Scanner au centre, Prêts, Rayons) ; sur chaque sous-page, un bouton retour vers la page
+  parente (« ‹ Livres », « ‹ titre du livre »). Installée sur iPhone, l'application n'a aucun
+  bouton retour du système. « Voir le site » et la déconnexion sont en bas de l'accueil.
 
 ---
 

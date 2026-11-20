@@ -46,7 +46,8 @@ Réservé aux comptes `ROLE_ADMIN`. L'interface dit « Gestion »
 - **Fiche d'un livre** (`/admin/livres/{id}`) : couverture, rayon et position, thèmes, détails,
   prêt en cours avec Rendre et Prolonger (ou Prêter), historique des prêts, lien vers sa page
   publique. On y arrive par le scan d'un livre connu, depuis les listes, après une modification
-  et après un ajout fait sans ISBN.
+  et après un ajout fait sans ISBN. « le ranger » et « Changer de place » y ouvrent une page
+  courte, le rayon en grandes cases et la position sur l'étagère, au lieu du formulaire complet.
 - **Livres** : la même recherche que le catalogue public, filtres compris (rayon, catégorie,
   année, disponibilité), avec le rayon et la position de chaque livre ; ajout sans ISBN,
   modification, remplacement de la couverture, suppression.
@@ -270,6 +271,7 @@ tests/                      PHPUnit, sur une vraie base MySQL `app_test`
 | `admin_book_lookup` | GET | `/admin/livres/recherche-isbn/{isbn}` | JSON : métadonnées issues des sources externes |
 | `admin_book_new` | GET, POST | `/admin/livres/nouveau?isbn=…` | Ajout |
 | `admin_book_edit` | GET, POST | `/admin/livres/{id}/modifier` | Modification |
+| `admin_book_shelve` | GET, POST | `/admin/livres/{id}/ranger` | Ranger un livre : rayon (en cases à toucher) et position sur l'étagère, rien d'autre |
 | `admin_book_delete` | POST | `/admin/livres/{id}/supprimer` | Suppression (CSRF) |
 | `admin_genre_index` | GET, POST | `/admin/rayons` | Liste et création des rayons |
 | `admin_genre_edit` | GET, POST | `/admin/rayons/{id}/modifier` | Renommage |

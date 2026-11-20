@@ -7,6 +7,7 @@ namespace App\Controller\Admin;
 use App\Entity\Book;
 use App\Entity\BookImage;
 use App\Entity\User;
+use App\Form\BookShelvingType;
 use App\Form\BookType;
 use App\Repository\BookRepository;
 use App\Repository\CategoryRepository;
@@ -239,6 +240,34 @@ class BookController extends AbstractController
             'form' => $form,
             'book' => $book,
             'knownCategories' => $categoryRepository->findAllOrdered(),
+        ]);
+    }
+
+    /**
+     * Ranger un livre : rayon et position seulement. « le ranger », sur la fiche,
+     * ouvrait tout le formulaire de modification pour un seul champ.
+     */
+    #[Route('/{id}/ranger', name: 'admin_book_shelve', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    public function shelve(Request $request, Book $book): Response
+    {
+        $form = $this->createForm(BookShelvingType::class, $book);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->entityManager->flush();
+
+            $this->addFlash('success', \sprintf(
+                '« %s » est rangé dans le rayon %s.',
+                $book->getTitle(),
+                $book->getGenre()?->getName(),
+            ));
+
+            return $this->redirectToRoute('admin_book_show', ['id' => $book->getId()]);
+        }
+
+        return $this->render('admin/book/shelve.html.twig', [
+            'form' => $form,
+            'book' => $book,
         ]);
     }
 

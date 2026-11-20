@@ -11,7 +11,7 @@ DEPLOY_PATH ?= lesp
 DEPLOY_PHP ?= php
 
 .DEFAULT_GOAL := help
-.PHONY: help up stop down restart logs shell cc assets test lint migrate deploy release ssh-key migrate-prod prod-refresh
+.PHONY: help up stop down restart logs shell cc assets test lint migrate deploy release backup ssh-key migrate-prod prod-refresh
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -61,15 +61,16 @@ deploy: ## Construit la branche deploy livree a OVH (make deploy PUSH=1 pour l'e
 ssh-key: ## Installe votre cle publique sur l'hebergement (mot de passe demande une fois)
 	ssh-copy-id $(DEPLOY_SSH)
 
-# Les coordonnees sont transmises par Make : lui seul lit .deploy.local de
-# facon fiable, la syntaxe d'un Makefile et celle de `source` differant.
-release: ## Livraison complete : pousse, attend OVH, vide le cache de production
-	DEPLOY_SSH='$(DEPLOY_SSH)' DEPLOY_PATH='$(DEPLOY_PATH)' DEPLOY_PHP='$(DEPLOY_PHP)' DEPLOY_URL='$(DEPLOY_URL)' ./deploy/release.sh
+# Les scripts lisent eux-memes .deploy.local, dans la syntaxe de Make comme dans
+# celle du shell (deploy/commun.sh).
+release: ## Livraison complete : sauvegarde, pousse, attend OVH, vide le cache de production
+	./deploy/release.sh
 
-# Coordonnees transmises par Make, comme pour `release` : la syntaxe d'un Makefile
-# et celle de `source` different, et les scripts ne voyaient rien de .deploy.local.
+backup: ## Sauvegarde la base et les couvertures de production dans backups/
+	./deploy/backup.sh
+
 migrate-prod: ## Migrations sur l'hebergement (make migrate-prod RUN=1 pour appliquer)
-	DEPLOY_SSH='$(DEPLOY_SSH)' DEPLOY_PATH='$(DEPLOY_PATH)' DEPLOY_PHP='$(DEPLOY_PHP)' ./deploy/migrate.sh $(if $(RUN),--run,)
+	./deploy/migrate.sh $(if $(RUN),--run,)
 
 prod-refresh: ## Indispensable apres chaque deploiement : vide le cache de production
 	ssh $(DEPLOY_SSH) 'cd $(DEPLOY_PATH) && git log -1 --oneline && $(DEPLOY_PHP) bin/console cache:clear'

@@ -24,6 +24,8 @@
 /public/uploads/
 # Coordonnees SSH de l'hebergement : le depot est public.
 /.deploy.local
+# Sauvegardes de production (deploy/backup.sh) : elles contiennent le nom des emprunteurs.
+/backups/
 # Maquettes de travail du compagnon visuel de brainstorming.
 /.superpowers/
 # Notes de reprise : document de travail local, hors du depot.

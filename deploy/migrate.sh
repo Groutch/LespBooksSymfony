@@ -14,25 +14,15 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-
-# Make transmet deja les coordonnees (cible `migrate-prod`). La lecture directe
-# ne sert qu'a l'appel manuel du script.
-if [ -z "${DEPLOY_SSH:-}" ] && [ -f .deploy.local ]; then
-    # shellcheck disable=SC1091
-    . ./.deploy.local
-fi
-
-: "${DEPLOY_SSH:?Renseignez DEPLOY_SSH dans .deploy.local}"
-: "${DEPLOY_PATH:=lesp}"
-: "${DEPLOY_PHP:=php}"
+. deploy/commun.sh
 
 if [ "${1:-}" = "--run" ]; then
     echo "==> Application des migrations sur $DEPLOY_PATH"
-    ssh "$DEPLOY_SSH" "cd $DEPLOY_PATH && $DEPLOY_PHP bin/console doctrine:migrations:migrate --no-interaction"
-    ssh "$DEPLOY_SSH" "cd $DEPLOY_PATH && $DEPLOY_PHP bin/console cache:clear"
+    distant "cd $DEPLOY_PATH && $DEPLOY_PHP bin/console doctrine:migrations:migrate --no-interaction"
+    distant "cd $DEPLOY_PATH && $DEPLOY_PHP bin/console cache:clear"
 else
     echo "==> Migrations en attente (aucune modification)"
-    ssh "$DEPLOY_SSH" "cd $DEPLOY_PATH && $DEPLOY_PHP bin/console doctrine:migrations:status"
+    distant "cd $DEPLOY_PATH && $DEPLOY_PHP bin/console doctrine:migrations:status"
     echo
-    echo "Pour appliquer :  ./deploy/migrate.sh --run"
+    echo "Pour appliquer :  make migrate-prod RUN=1"
 fi

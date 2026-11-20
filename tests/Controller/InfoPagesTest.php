@@ -52,6 +52,9 @@ class InfoPagesTest extends AdminWebTestCase
         self::assertSelectorTextContains('main', 'aucun cookie');
         // Tiree de app.borrower_retention_months, comme l'effacement reel (LoanAnonymizer).
         self::assertSelectorTextContains('main', '3 mois après le retour du livre');
+        // Tiree de app.backup_retention_days, que deploy/backup.sh lit aussi pour purger.
+        self::assertSelectorTextContains('main', 'sauvegardes de sécurité');
+        self::assertSelectorTextContains('main', '30 jours au plus');
         self::assertSelectorExists('main a[href="mailto:lespouey.mairie@wanadoo.fr"]');
         self::assertSelectorExists('main a[href="https://www.cnil.fr"]');
     }

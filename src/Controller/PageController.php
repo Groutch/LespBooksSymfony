@@ -20,6 +20,8 @@ class PageController extends AbstractController
         private readonly int $defaultLoanDays,
         #[Autowire('%app.borrower_retention_months%')]
         private readonly int $retentionMonths,
+        #[Autowire('%app.backup_retention_days%')]
+        private readonly int $backupRetentionDays,
     ) {
     }
 
@@ -42,10 +44,11 @@ class PageController extends AbstractController
     #[Route('/confidentialite', name: 'privacy_policy', methods: ['GET'])]
     public function privacyPolicy(): Response
     {
-        // Meme parametre que LoanAnonymizer : la promesse et l'effacement reel
-        // ne peuvent pas diverger.
+        // Memes parametres que LoanAnonymizer et deploy/backup.sh : la promesse et
+        // l'effacement reel ne peuvent pas diverger.
         return $this->render('pages/confidentialite.html.twig', [
             'retentionMonths' => $this->retentionMonths,
+            'backupRetentionDays' => $this->backupRetentionDays,
         ]);
     }
 }

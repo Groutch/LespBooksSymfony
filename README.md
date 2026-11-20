@@ -193,6 +193,7 @@ Elles se définissent dans `.env.local`, qui n'est jamais versionné.
 | `app.category_similarity_threshold` | `0.85` | Seuil au-delà duquel une catégorie proposée rejoint une catégorie existante (0 = tout fusionner, 1 = égalité stricte) |
 | `app.default_loan_days` | `28` | Échéance proposée pour un nouveau prêt, et durée ajoutée par une prolongation sans date. « Infos pratiques » l'annonce aux habitants. |
 | `app.borrower_retention_months` | `3` | Mois pendant lesquels le nom de l'emprunteur reste attaché à un prêt rendu. Annoncé sur `/confidentialite`. |
+| `app.backup_retention_days` | `30` | Jours de conservation des sauvegardes, qui contiennent aussi le nom des emprunteurs. Annoncé sur `/confidentialite`, et lu par `deploy/backup.sh` pour purger : garder la forme `clé: nombre` sur une seule ligne. |
 | `app.bibliotheque` | adresse, horaires, courriel, éditeur, directeur de la publication, hébergeur | Coordonnées publiques, exposées aux gabarits sous le nom `bibliotheque` (`twig.globals`). **Un horaire qui change se corrige ici, et nulle part ailleurs.** |
 
 Ils sont injectés par `#[Autowire('%app.…%')]`.
@@ -211,7 +212,8 @@ assets/
   fonts/                    Fraunces et Inter en woff2, sous-ensembles latin et latin-ext
   images/partage.png        aperçu des liens partagés (1200×630)
 config/                     configuration Symfony (sessions, sécurité, http_client…)
-deploy/                     build.sh, release.sh, migrate.sh : livraison vers OVH
+deploy/                     livraison vers OVH : build.sh, release.sh, migrate.sh, backup.sh,
+                            et commun.sh (coordonnées et connexion SSH partagées)
 docker/                     image PHP 8.4 + Apache, php.ini, création de la base de test
 migrations/                 migrations Doctrine
 public/
@@ -514,9 +516,22 @@ reste valide sur le serveur.
 make release
 ```
 
-Cette commande construit et pousse la branche `deploy`, attend qu'OVH ait répliqué le commit
-livré, vide le cache de production, puis vérifie que l'accueil répond 200 et que `.env.local`
-n'est pas servi.
+Cette commande sauvegarde la base et les couvertures de production (voir
+[Sauvegardes](#sauvegardes)), construit et pousse la branche `deploy`, attend qu'OVH ait répliqué
+le commit livré, vide le cache de production, puis vérifie que l'accueil répond 200 et que
+`.env.local` n'est pas servi. Une sauvegarde ratée arrête la livraison avant tout envoi.
+
+Les coordonnées de l'hébergement se lisent dans `.deploy.local`, à la racine du projet et jamais
+versionné. La syntaxe du shell (`CLE=valeur`) comme celle de Make (`CLE = valeur`) y sont
+acceptées :
+
+```bash
+DEPLOY_SSH=identifiant@serveur-ssh-de-l-hebergeur
+DEPLOY_PATH=lesp                     # dossier du site sur l'hébergement
+DEPLOY_PHP=php                       # binaire PHP en ligne de commande
+DEPLOY_URL=https://exemple.fr        # facultatif : active les contrôles finaux
+BACKUP_DIR=backups                   # facultatif : dossier local des sauvegardes
+```
 
 Pourquoi ne pas se contenter de pousser ? Entre le push et la réplication, le serveur sert les
 nouveaux assets avec les anciens gabarits encore en cache : la page sort à moitié habillée. Cela
@@ -542,3 +557,45 @@ make migrate-prod RUN=1   # les applique, puis vide le cache
 
 Dans l'ordre inverse, la migration retirerait des colonnes que l'ancien code, encore en ligne,
 s'attend à trouver.
+
+### Sauvegardes
+
+```bash
+make backup
+```
+
+Rapatrie sur cette machine, dans `backups/` (ignoré par Git), un dump de la base
+(`base-AAAA-MM-JJ-HHMMSS.sql.gz`) et une archive des couvertures
+(`couvertures-AAAA-MM-JJ-HHMMSS.tar.gz`). `make release` en fait une avant chaque livraison.
+
+- Le dump est produit **sur le serveur** par `deploy/dump.php`, qui n'y est pas livré : le
+  script part par SSH sur l'entrée standard de PHP. Une commande Symfony n'existerait sur le
+  serveur qu'une fois livrée (et après un `cache:clear`), alors que la sauvegarde précède la
+  livraison ; le script ne dépend que de `vendor/` et marche même si le site est cassé.
+- Il lit les identifiants de la base dans les `.env` du serveur, comme Symfony : ils ne
+  transitent jamais par la machine qui sauvegarde, et le mot de passe passe à `mysqldump` par un
+  fichier d'options temporaire, jamais dans la liste des processus.
+- Un dump qui ne se termine pas par `-- Dump completed` est jeté : on ne garde pas une
+  sauvegarde tronquée en croyant en avoir une.
+- **Les sauvegardes contiennent le nom des emprunteurs.** Elles ne sont lisibles que par le
+  compte qui les crée, et chaque sauvegarde supprime celles de plus de
+  `app.backup_retention_days` jours (30), durée annoncée sur `/confidentialite`. La purge n'a lieu
+  qu'au passage du script : une copie trop vieille disparaît à la sauvegarde suivante.
+
+**Vérifier une sauvegarde** en la chargeant dans la base locale (qu'elle **remplace**) :
+
+```bash
+gunzip -c backups/base-AAAA-MM-JJ-HHMMSS.sql.gz \
+  | docker compose exec -T database mysql -uapp -p'!ChangeMe!' app
+```
+
+**Restaurer la production** : la base, avec les identifiants du `.env.local` du serveur (le mot
+de passe est demandé), puis les couvertures.
+
+```bash
+scp backups/base-AAAA-MM-JJ-HHMMSS.sql.gz identifiant@serveur:
+ssh -t identifiant@serveur \
+  "gunzip -c base-AAAA-MM-JJ-HHMMSS.sql.gz | mysql --host=<hôte> --user=<utilisateur> -p <base> && rm base-AAAA-MM-JJ-HHMMSS.sql.gz"
+
+ssh identifiant@serveur "cd lesp/public && tar -xzf -" < backups/couvertures-AAAA-MM-JJ-HHMMSS.tar.gz
+```

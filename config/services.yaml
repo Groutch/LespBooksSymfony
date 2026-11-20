@@ -17,6 +17,10 @@ parameters:
     # (voir LoanAnonymizer). Annoncee sur /confidentialite : la changer ici change
     # aussi la promesse faite aux habitants.
     app.borrower_retention_months: 3
+    # Duree de conservation des sauvegardes (base et couvertures), qui contiennent
+    # elles aussi le nom des emprunteurs. Annoncee sur /confidentialite, et LUE PAR
+    # deploy/backup.sh pour purger : garder la forme « cle: nombre » sur une ligne.
+    app.backup_retention_days: 30
 
     # Coordonnees publiques de la bibliotheque, exposees aux gabarits sous le nom
     # `bibliotheque` (twig.yaml) : pied de page, accueil, « Infos pratiques »,

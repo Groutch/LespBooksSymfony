@@ -13,48 +13,28 @@
 #   DEPLOY_PATH=lesp
 #   DEPLOY_PHP=/usr/local/php8.4/bin/php
 #   DEPLOY_URL=https://lesp.groutch.com   (facultatif : active les controles finaux)
+#   BACKUP_DIR=backups                    (facultatif : dossier des sauvegardes)
 #
-#   ./deploy/release.sh          construit, pousse, attend, vide le cache
+#   ./deploy/release.sh          sauvegarde, construit, pousse, attend, vide le cache
 #
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-
-# Make transmet deja les coordonnees (cible `release`). La lecture directe ne
-# sert qu'a l'appel manuel du script.
-if [ -z "${DEPLOY_SSH:-}" ] && [ -f .deploy.local ]; then
-    # Le fichier est lu a la fois par make et par les scripts. Make tolere
-    # « CLE = valeur » avec des espaces autour du signe egal, `source` non :
-    # un fichier ecrit a la mode Make laisse les scripts sans coordonnees,
-    # sans le moindre message. On normalise donc avant de lire.
-    eval "$(sed -E \
-        -e 's/[[:space:]]+$//' \
-        -e 's/^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*[:?+]?=[[:space:]]*(.*)$/\1="\2"/' \
-        .deploy.local | grep -E '^[A-Za-z_][A-Za-z0-9_]*=')"
-fi
-
-: "${DEPLOY_SSH:?Renseignez DEPLOY_SSH dans .deploy.local}"
-: "${DEPLOY_PATH:=lesp}"
-: "${DEPLOY_PHP:=php}"
+. deploy/commun.sh
 
 # OVH replique en quelques secondes d'ordinaire ; la marge couvre les jours creux.
 ATTENTE_MAX="${ATTENTE_MAX:-180}"
 INTERVALLE=5
 
-# Une seule connexion SSH pour tout le script, reutilisee par toutes les commandes.
-# Sans cela, la boucle d'attente rouvre une session toutes les 5 secondes : avec une
-# authentification par mot de passe, elle le redemanderait une trentaine de fois.
-# Avec une cle, c'est simplement plus rapide.
-SSH_CTL="$(mktemp -u "${TMPDIR:-/tmp}/lesp-ssh-XXXXXXXX")"
-SSH_OPTS=(-o ControlMaster=auto -o ControlPath="$SSH_CTL" -o ControlPersist=180)
-fermer_connexion() {
-    ssh -O exit -o ControlPath="$SSH_CTL" "$DEPLOY_SSH" 2>/dev/null || true
-}
-trap fermer_connexion EXIT
-
 # Premiere connexion : elle porte l'authentification, les suivantes la reutilisent.
 echo "==> Connexion a l'hebergement"
-ssh "${SSH_OPTS[@]}" "$DEPLOY_SSH" true
+distant true
+
+# Avant de toucher au serveur : c'est cet etat qu'on voudra retrouver si la
+# livraison tourne mal. Une sauvegarde ratee arrete la livraison.
+echo
+./deploy/backup.sh
+echo
 
 ./deploy/build.sh --push
 
@@ -66,7 +46,7 @@ echo "==> Attente de la replication par OVH (livraison ${ATTENDU:0:7})"
 
 DEBUT=$(date +%s)
 while :; do
-    DISTANT=$(ssh "${SSH_OPTS[@]}" "$DEPLOY_SSH" "cd $DEPLOY_PATH && git rev-parse HEAD" 2>/dev/null || true)
+    DISTANT=$(distant "cd $DEPLOY_PATH && git rev-parse HEAD" 2>/dev/null || true)
 
     if [ "$DISTANT" = "$ATTENDU" ]; then
         echo "    OVH est a jour"
@@ -88,7 +68,7 @@ done
 
 echo
 echo "==> Vidage du cache de production"
-ssh "${SSH_OPTS[@]}" "$DEPLOY_SSH" "cd $DEPLOY_PATH && $DEPLOY_PHP bin/console cache:clear"
+distant "cd $DEPLOY_PATH && $DEPLOY_PHP bin/console cache:clear"
 
 # Controles finaux, seulement si l'URL publique est renseignee.
 if [ -n "${DEPLOY_URL:-}" ]; then

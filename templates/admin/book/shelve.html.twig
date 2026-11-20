@@ -1,0 +1,45 @@
+{% extends 'admin/layout.html.twig' %}
+{% set retour = {url: path('admin_book_show', {id: book.id}), libelle: book.title} %}
+
+{% block title %}Ranger « {{ book.title }} »{% endblock %}
+
+{% block admin_content %}
+<h1 class="font-display text-2xl font-semibold tracking-tight">Ranger « {{ book.title }} »</h1>
+<p class="mt-1 text-sm text-ink-muted">{{ book.authorNames|default('Auteur inconnu') }}</p>
+
+{% if form.genre.vars.choices is empty %}
+    {#- Sans rayon, rien a choisir : les rayons se creent sur leur propre ecran. -#}
+    <p class="alert mt-5 text-sm">
+        Aucun rayon n'existe encore.
+        <a href="{{ path('admin_genre_index') }}" class="font-medium text-accent underline underline-offset-2 hover:no-underline">Créer les rayons</a>,
+        puis revenir ranger ce livre.
+    </p>
+{% else %}
+    {{ form_start(form, {attr: {class: 'surface mt-5 p-4'}}) }}
+        {{ form_errors(form) }}
+
+        {#- Les rayons en grandes cases : toute l'etiquette se touche, plus facile a
+            viser qu'un bouton radio de 16 px, et la case choisie prend l'accent
+            (6,32:1 sur son halo). -#}
+        <fieldset class="mb-5">
+            <legend class="mb-2 text-sm font-medium text-ink">Rayon</legend>
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {% for choix in form.genre %}
+                    <label class="flex min-h-12 cursor-pointer items-center gap-3 rounded-xs border border-line bg-surface px-3 py-2 text-sm has-checked:border-accent has-checked:bg-accent-wash has-checked:font-medium has-checked:text-accent">
+                        {{ form_widget(choix, {attr: {class: 'size-4 shrink-0 accent-accent'}}) }}
+                        {{ choix.vars.label }}
+                    </label>
+                {% endfor %}
+            </div>
+            {{ form_errors(form.genre) }}
+        </fieldset>
+
+        {{ form_row(form.shelfLocation) }}
+
+        <div class="flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary">Ranger le livre</button>
+            <a href="{{ path('admin_book_show', {id: book.id}) }}" class="btn btn-ghost">Annuler</a>
+        </div>
+    {{ form_end(form) }}
+{% endif %}
+{% endblock %}

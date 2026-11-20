@@ -23,6 +23,7 @@ return array(
     'App\\Entity\\Genre' => $baseDir . '/src/Entity/Genre.php',
     'App\\Entity\\Loan' => $baseDir . '/src/Entity/Loan.php',
     'App\\Entity\\User' => $baseDir . '/src/Entity/User.php',
+    'App\\Form\\BookShelvingType' => $baseDir . '/src/Form/BookShelvingType.php',
     'App\\Form\\BookType' => $baseDir . '/src/Form/BookType.php',
     'App\\Form\\GenreType' => $baseDir . '/src/Form/GenreType.php',
     'App\\Form\\LoanType' => $baseDir . '/src/Form/LoanType.php',

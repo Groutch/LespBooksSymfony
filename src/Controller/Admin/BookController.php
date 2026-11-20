@@ -7,6 +7,7 @@ namespace App\Controller\Admin;
 use App\Entity\Book;
 use App\Entity\BookImage;
 use App\Entity\User;
+use App\Form\BookShelvingType;
 use App\Form\BookType;
 use App\Repository\BookRepository;
 use App\Repository\CategoryRepository;
@@ -182,14 +183,22 @@ class BookController extends AbstractController
             $this->entityManager->persist($book);
             $this->entityManager->flush();
 
-            $this->addFlash('success', \sprintf('« %s » a été ajouté au catalogue.', $book->getTitle()));
+            // Arrive par le scanner (?isbn=, camera ou saisie), on y retourne : en
+            // serie, le livre suivant attend deja. Deux boutons obligeaient a
+            // choisir a chaque livre ; le bandeau du scanner mene a la fiche.
+            if (null !== $isbn && '' !== $isbn) {
+                $this->addFlash('ajout', [
+                    'titre' => $book->getTitle(),
+                    'url' => $this->generateUrl('admin_book_show', ['id' => $book->getId()]),
+                ]);
 
-            if ($request->request->has('saveAndScan')) {
                 return $this->redirectToRoute('admin_book_scan');
             }
 
-            // Sur sa fiche : on y relit ce qui vient d'etre enregistre, et on
-            // peut le preter aussitot.
+            // Ajoute sans ISBN : sur sa fiche, pour relire ce qui vient d'etre
+            // enregistre, et le preter aussitot.
+            $this->addFlash('success', \sprintf('« %s » a été ajouté au catalogue.', $book->getTitle()));
+
             return $this->redirectToRoute('admin_book_show', ['id' => $book->getId()]);
         }
 
@@ -231,6 +240,34 @@ class BookController extends AbstractController
             'form' => $form,
             'book' => $book,
             'knownCategories' => $categoryRepository->findAllOrdered(),
+        ]);
+    }
+
+    /**
+     * Ranger un livre : rayon et position seulement. « le ranger », sur la fiche,
+     * ouvrait tout le formulaire de modification pour un seul champ.
+     */
+    #[Route('/{id}/ranger', name: 'admin_book_shelve', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    public function shelve(Request $request, Book $book): Response
+    {
+        $form = $this->createForm(BookShelvingType::class, $book);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->entityManager->flush();
+
+            $this->addFlash('success', \sprintf(
+                '« %s » est rangé dans le rayon %s.',
+                $book->getTitle(),
+                $book->getGenre()?->getName(),
+            ));
+
+            return $this->redirectToRoute('admin_book_show', ['id' => $book->getId()]);
+        }
+
+        return $this->render('admin/book/shelve.html.twig', [
+            'form' => $form,
+            'book' => $book,
         ]);
     }
 

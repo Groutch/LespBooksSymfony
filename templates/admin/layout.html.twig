@@ -39,7 +39,7 @@
 {% set routeCourante = app.request.attributes.get('_route') %}
 {% set sections = [
     {label: 'Accueil', route: 'admin_dashboard',   icone: 'accueil', routes: ['admin_dashboard']},
-    {label: 'Livres',  route: 'admin_book_index',  icone: 'livres',  routes: ['admin_book_index', 'admin_book_show', 'admin_book_edit']},
+    {label: 'Livres',  route: 'admin_book_index',  icone: 'livres',  routes: ['admin_book_index', 'admin_book_show', 'admin_book_edit', 'admin_book_shelve']},
     {label: 'Scanner', route: 'admin_book_scan',   icone: 'scanner', routes: ['admin_book_scan', 'admin_book_new']},
     {label: 'Prêts',   route: 'admin_loan_index',  icone: 'prets',   routes: ['admin_loan_index', 'admin_loan_new']},
     {label: 'Rayons',  route: 'admin_genre_index', icone: 'rayons',  routes: ['admin_genre_index', 'admin_genre_edit']},

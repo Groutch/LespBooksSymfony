@@ -83,11 +83,13 @@
             {% if book.shelfLocation %}
                 <span class="text-sm text-ink-muted">{{ book.shelfLocation }}</span>
             {% endif %}
+            {#- La page de rangement, pas le formulaire complet : on ne change que la place. -#}
+            <a href="{{ path('admin_book_shelve', {id: book.id}) }}" class="text-sm text-accent underline underline-offset-2 hover:no-underline">Changer de place</a>
         </p>
     {% else %}
         <p class="mt-6 text-sm text-ink-muted">
             Pas encore de rayon :
-            <a href="{{ path('admin_book_edit', {id: book.id}) }}" class="text-accent underline underline-offset-2 hover:no-underline">le ranger</a>.
+            <a href="{{ path('admin_book_shelve', {id: book.id}) }}" class="text-accent underline underline-offset-2 hover:no-underline">le ranger</a>.
         </p>
     {% endif %}
 

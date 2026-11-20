@@ -26,3 +26,12 @@
         <div class="sm:col-span-2">{{ form_row(form.coverFile) }}</div>
     </div>
 {% endmacro %}
+
+{#- Barre d'enregistrement des formulaires de livre. Au telephone, elle reste
+    collee en bas, au-dessus de la barre d'onglets (4rem, sa bordure, puis la zone
+    sure de l'iPhone) : en serie, on ne descend plus sous la description et la
+    couverture a chaque livre. Sur ordinateur, elle reprend sa place sous le
+    formulaire. Les marges negatives la font deborder du `p-4` de la surface. -#}
+{% macro actionBarClasses() -%}
+    sticky bottom-[calc(4rem_+_1px_+_env(safe-area-inset-bottom))] z-10 -mx-4 -mb-4 flex flex-wrap gap-2 border-t border-line bg-surface px-4 py-3 sm:static sm:mx-0 sm:mb-0 sm:border-0 sm:bg-transparent sm:p-0
+{%- endmacro %}

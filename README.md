@@ -39,11 +39,15 @@ Ouvert à tous, sans compte.
 Réservé aux comptes `ROLE_ADMIN`. L'interface dit « Gestion »
 - **Scanner** un livre avec la caméra du téléphone (EAN-13), ou saisir l'ISBN à la main. Un livre
   déjà présent ouvre sa fiche, d'où l'on peut le prêter ou le rendre ; un livre inconnu ouvre le
-  formulaire, qui se remplit tout seul à partir de Google Books, OpenLibrary et la BnF. On
-  enregistre, puis on passe au livre suivant.
+  formulaire, qui se remplit tout seul à partir de Google Books, OpenLibrary et la BnF. Pensé
+  pour scanner une pile à la chaîne : la caméra s'allume seule, un unique bouton « Enregistrer »
+  (collé en bas de l'écran au téléphone) ramène au scanner, et un bandeau y mène à la fiche du
+  livre tout juste ajouté.
 - **Fiche d'un livre** (`/admin/livres/{id}`) : couverture, rayon et position, thèmes, détails,
   prêt en cours avec Rendre et Prolonger (ou Prêter), historique des prêts, lien vers sa page
-  publique. On y arrive par le scan, depuis les listes, et après un ajout ou une modification.
+  publique. On y arrive par le scan d'un livre connu, depuis les listes, après une modification
+  et après un ajout fait sans ISBN. « le ranger » et « Changer de place » y ouvrent une page
+  courte, le rayon en grandes cases et la position sur l'étagère, au lieu du formulaire complet.
 - **Livres** : la même recherche que le catalogue public, filtres compris (rayon, catégorie,
   année, disponibilité), avec le rayon et la position de chaque livre ; ajout sans ISBN,
   modification, remplacement de la couverture, suppression.
@@ -267,6 +271,7 @@ tests/                      PHPUnit, sur une vraie base MySQL `app_test`
 | `admin_book_lookup` | GET | `/admin/livres/recherche-isbn/{isbn}` | JSON : métadonnées issues des sources externes |
 | `admin_book_new` | GET, POST | `/admin/livres/nouveau?isbn=…` | Ajout |
 | `admin_book_edit` | GET, POST | `/admin/livres/{id}/modifier` | Modification |
+| `admin_book_shelve` | GET, POST | `/admin/livres/{id}/ranger` | Ranger un livre : rayon (en cases à toucher) et position sur l'étagère, rien d'autre |
 | `admin_book_delete` | POST | `/admin/livres/{id}/supprimer` | Suppression (CSRF) |
 | `admin_genre_index` | GET, POST | `/admin/rayons` | Liste et création des rayons |
 | `admin_genre_edit` | GET, POST | `/admin/rayons/{id}/modifier` | Renommage |
@@ -335,8 +340,11 @@ requête en base. Les métadonnées sont l'affaire du formulaire. Confondre les 
 la recherche externe deux fois par livre, soit huit secondes d'attente dont quatre pour un
 résultat jeté.
 
-Côté navigateur, `barcode_scanner_controller.js` lit le code avec `BarcodeDetector`, ou ZXing à
-défaut, puis vibre et maintient une confirmation au moins 700 ms. Sans ce délai, le bénévole ne
+Côté navigateur, `barcode_scanner_controller.js` allume la caméra dès l'ouverture du scanner
+(un clic par livre cassait le rythme d'une série), lit le code avec `BarcodeDetector`, ou ZXing à
+défaut, puis vibre et maintient une confirmation au moins 700 ms. Un code qui n'est pas un livre
+(étiquette de prix, code magasin) est signalé, puis ignoré s'il reste dans le champ, et la
+lecture reprend seule. Sans ce délai, le bénévole ne
 voyait qu'un clignotement et croyait à un plantage. `isbn_autofill_controller.js` ne remplit que
 les champs vides, pour ne jamais écraser une saisie en cours.
 

@@ -164,8 +164,8 @@ class ComposerStaticInit7f5a3cfc8b17e20bec54c3aae7c565fa
         'phpDocumentor\\Reflection\\' => 
         array (
             0 => __DIR__ . '/..' . '/phpdocumentor/reflection-common/src',
-            1 => __DIR__ . '/..' . '/phpdocumentor/reflection-docblock/src',
-            2 => __DIR__ . '/..' . '/phpdocumentor/type-resolver/src',
+            1 => __DIR__ . '/..' . '/phpdocumentor/type-resolver/src',
+            2 => __DIR__ . '/..' . '/phpdocumentor/reflection-docblock/src',
         ),
         'Webmozart\\Assert\\' => 
         array (
@@ -575,6 +575,7 @@ class ComposerStaticInit7f5a3cfc8b17e20bec54c3aae7c565fa
         'App\\Entity\\Genre' => __DIR__ . '/../..' . '/src/Entity/Genre.php',
         'App\\Entity\\Loan' => __DIR__ . '/../..' . '/src/Entity/Loan.php',
         'App\\Entity\\User' => __DIR__ . '/../..' . '/src/Entity/User.php',
+        'App\\Form\\BookShelvingType' => __DIR__ . '/../..' . '/src/Form/BookShelvingType.php',
         'App\\Form\\BookType' => __DIR__ . '/../..' . '/src/Form/BookType.php',
         'App\\Form\\GenreType' => __DIR__ . '/../..' . '/src/Form/GenreType.php',
         'App\\Form\\LoanType' => __DIR__ . '/../..' . '/src/Form/LoanType.php',

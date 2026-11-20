@@ -522,6 +522,16 @@ couvertures de production (voir [Sauvegardes](#sauvegardes)), construit et pouss
 migrations, puis vérifie que l'accueil répond 200 et que `.env.local` n'est pas servi. Une
 sauvegarde ratée arrête la livraison avant tout envoi.
 
+Avant même de se connecter, elle refuse de partir :
+
+- hors de `main` : la livraison suivante, faite depuis `main`, effacerait sans prévenir ce qui
+  serait parti d'une branche de travail ;
+- si des fichiers sont modifiés **ou non suivis** : la livraison part de `HEAD`, sans eux, alors
+  que les tests tournent avec eux (une migration oubliée au `git add` passerait les tests) ;
+- si `main` diffère d'`origin/main` : commits non poussés, ou retard sur GitHub ;
+- si `make lint` ou `make test` échoue. La base MySQL de développement doit donc tourner
+  (`make up`). En urgence seulement, `make release SANS_TESTS=1` saute cette étape.
+
 Les coordonnées de l'hébergement se lisent dans `.deploy.local`, à la racine du projet et jamais
 versionné. La syntaxe du shell (`CLE=valeur`) comme celle de Make (`CLE = valeur`) y sont
 acceptées :
@@ -538,7 +548,7 @@ Pourquoi ne pas se contenter de pousser ? Entre le push et la réplication, le s
 nouveaux assets avec les anciens gabarits encore en cache : la page sort à moitié habillée. Cela
 ressemble à un bug de CSS, alors que c'est un problème d'ordre des opérations.
 
-En cas de besoin, les étapes existent séparément :
+En cas de besoin, les étapes existent séparément, **sans aucun des contrôles ci-dessus** :
 
 ```bash
 make deploy            # construit la branche deploy, sans la pousser

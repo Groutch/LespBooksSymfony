@@ -18,6 +18,7 @@
 #
 #   ./deploy/release.sh          sauvegarde, construit, pousse, attend, vide le cache, migre
 #   MIGRER=1 ./deploy/release.sh confirme d'avance les migrations (sans terminal)
+#   SANS_TESTS=1 ...             saute tests et lint (urgence seulement)
 #
 set -euo pipefail
 
@@ -27,6 +28,60 @@ cd "$(dirname "$0")/.."
 # OVH replique en quelques secondes d'ordinaire ; la marge couvre les jours creux.
 ATTENTE_MAX="${ATTENTE_MAX:-180}"
 INTERVALLE=5
+
+# --- Garde-fous, avant toute connexion ---------------------------------------------
+#
+# Ce qui part en ligne est HEAD (build.sh le livre par git archive) : il doit etre
+# sur main, identique a origin/main, et correspondre a ce qu'on a sous les yeux.
+echo "==> Verifications locales"
+
+BRANCHE=$(git symbolic-ref --quiet --short HEAD || echo "HEAD detache")
+if [ "$BRANCHE" != main ]; then
+    # La livraison suivante, faite depuis main, effacerait sans prevenir ce qui
+    # aurait ete mis en ligne depuis une branche de travail.
+    echo "!! Branche « $BRANCHE » : seule main se livre. Fusionnez d'abord." >&2
+    exit 1
+fi
+
+# Fichiers non suivis compris : les tests tournent avec eux, mais la livraison
+# part de HEAD sans eux — une migration oubliee au `git add` passerait les tests
+# puis casserait la production.
+if [ -n "$(git status --porcelain)" ]; then
+    echo "!! Modifications non commitees : la livraison ne serait pas ce que vous avez teste." >&2
+    git status --short | sed 's/^/   /' >&2
+    exit 1
+fi
+
+# Identique a origin/main : en avance, on livrerait un commit qui n'existe que sur
+# ce disque (et que la branche deploy citerait en vain) ; en retard, du code perime.
+git fetch --quiet origin main
+LOCAL=$(git rev-parse HEAD)
+PUBLIE=$(git rev-parse origin/main)
+if [ "$LOCAL" != "$PUBLIE" ]; then
+    echo "!! main (${LOCAL:0:7}) differe d'origin/main (${PUBLIE:0:7})." >&2
+    if git merge-base --is-ancestor "$PUBLIE" "$LOCAL"; then
+        echo "   Commits non pousses : git push" >&2
+    elif git merge-base --is-ancestor "$LOCAL" "$PUBLIE"; then
+        echo "   main est en retard : git pull" >&2
+    else
+        echo "   Les deux ont diverge : a reconcilier avant de livrer." >&2
+    fi
+    exit 1
+fi
+echo "    main = origin/main (${LOCAL:0:7}), rien en suspens"
+
+if [ "${SANS_TESTS:-}" = 1 ]; then
+    echo "    SANS_TESTS=1 : tests et lint sautes"
+else
+    echo
+    echo "==> Tests et lint"
+    if ! make --no-print-directory lint test; then
+        echo "!! Tests ou lint en echec : rien n'a ete envoye." >&2
+        echo "   La base MySQL de developpement tourne-t-elle ? (make up)" >&2
+        exit 1
+    fi
+fi
+echo
 
 # Premiere connexion : elle porte l'authentification, les suivantes la reutilisent.
 echo "==> Connexion a l'hebergement"

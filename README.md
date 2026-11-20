@@ -1,4 +1,4 @@
-# Bibliothèque perso
+# Bibliothèque de Lespouey
 
 Application de la bibliothèque communautaire : les bénévoles cataloguent
 les livres en scannant leur code-barres au téléphone et suivent les prêts ; les

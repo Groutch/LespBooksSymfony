@@ -39,11 +39,14 @@ Ouvert à tous, sans compte.
 Réservé aux comptes `ROLE_ADMIN`. L'interface dit « Gestion »
 - **Scanner** un livre avec la caméra du téléphone (EAN-13), ou saisir l'ISBN à la main. Un livre
   déjà présent ouvre sa fiche, d'où l'on peut le prêter ou le rendre ; un livre inconnu ouvre le
-  formulaire, qui se remplit tout seul à partir de Google Books, OpenLibrary et la BnF. On
-  enregistre, puis on passe au livre suivant.
+  formulaire, qui se remplit tout seul à partir de Google Books, OpenLibrary et la BnF. Pensé
+  pour scanner une pile à la chaîne : la caméra s'allume seule, un unique bouton « Enregistrer »
+  (collé en bas de l'écran au téléphone) ramène au scanner, et un bandeau y mène à la fiche du
+  livre tout juste ajouté.
 - **Fiche d'un livre** (`/admin/livres/{id}`) : couverture, rayon et position, thèmes, détails,
   prêt en cours avec Rendre et Prolonger (ou Prêter), historique des prêts, lien vers sa page
-  publique. On y arrive par le scan, depuis les listes, et après un ajout ou une modification.
+  publique. On y arrive par le scan d'un livre connu, depuis les listes, après une modification
+  et après un ajout fait sans ISBN.
 - **Livres** : la même recherche que le catalogue public, filtres compris (rayon, catégorie,
   année, disponibilité), avec le rayon et la position de chaque livre ; ajout sans ISBN,
   modification, remplacement de la couverture, suppression.

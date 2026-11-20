@@ -15,7 +15,7 @@
 
     {{ fields.fields(form, knownCategories) }}
 
-    <div class="flex flex-wrap gap-2">
+    <div class="{{ fields.actionBarClasses() }}">
         <button type="submit" class="btn btn-primary">Enregistrer</button>
         <a href="{{ path('admin_book_show', {id: book.id}) }}" class="btn btn-ghost">Annuler</a>
     </div>

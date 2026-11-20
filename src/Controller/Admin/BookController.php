@@ -182,14 +182,22 @@ class BookController extends AbstractController
             $this->entityManager->persist($book);
             $this->entityManager->flush();
 
-            $this->addFlash('success', \sprintf('« %s » a été ajouté au catalogue.', $book->getTitle()));
+            // Arrive par le scanner (?isbn=, camera ou saisie), on y retourne : en
+            // serie, le livre suivant attend deja. Deux boutons obligeaient a
+            // choisir a chaque livre ; le bandeau du scanner mene a la fiche.
+            if (null !== $isbn && '' !== $isbn) {
+                $this->addFlash('ajout', [
+                    'titre' => $book->getTitle(),
+                    'url' => $this->generateUrl('admin_book_show', ['id' => $book->getId()]),
+                ]);
 
-            if ($request->request->has('saveAndScan')) {
                 return $this->redirectToRoute('admin_book_scan');
             }
 
-            // Sur sa fiche : on y relit ce qui vient d'etre enregistre, et on
-            // peut le preter aussitot.
+            // Ajoute sans ISBN : sur sa fiche, pour relire ce qui vient d'etre
+            // enregistre, et le preter aussitot.
+            $this->addFlash('success', \sprintf('« %s » a été ajouté au catalogue.', $book->getTitle()));
+
             return $this->redirectToRoute('admin_book_show', ['id' => $book->getId()]);
         }
 

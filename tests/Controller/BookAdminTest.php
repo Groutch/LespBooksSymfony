@@ -130,6 +130,32 @@ class BookAdminTest extends AdminWebTestCase
     }
 
     /**
+     * En serie, le livre suivant attend deja : arrive par le scanner, un seul
+     * bouton y ramene, et le bandeau du scanner mene a la fiche pour qui veut la
+     * relire. Deux boutons obligeaient a choisir a chaque livre.
+     */
+    public function testABookAddedFromTheScannerLeadsBackToTheScanner(): void
+    {
+        $this->client->loginUser($this->createAdmin());
+        $crawler = $this->client->request('GET', '/admin/livres/nouveau?isbn=9782253004226');
+
+        self::assertSelectorCount(1, 'main form[name="book"] button[type="submit"]');
+        self::assertSelectorTextContains('main a[href="/admin/livres/scanner"]', 'Annuler');
+
+        $this->client->submit($crawler->selectButton('Enregistrer')->form([
+            'book[title]' => 'Le Mystère de la chambre jaune',
+        ]));
+
+        self::assertResponseRedirects('/admin/livres/scanner');
+        $book = $this->entityManager->getRepository(Book::class)->findOneBy(['title' => 'Le Mystère de la chambre jaune']);
+        self::assertNotNull($book);
+
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('main', '« Le Mystère de la chambre jaune » ajouté au catalogue');
+        self::assertSelectorTextContains('main a[href="/admin/livres/'.$book->getId().'"]', 'Voir la fiche');
+    }
+
+    /**
      * La fiche recapitulative : ou est le livre, s'il est prete, a qui, et son
      * historique. C'est la que mene le scan d'un livre deja au catalogue.
      */

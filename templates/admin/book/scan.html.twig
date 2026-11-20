@@ -10,6 +10,15 @@
     <h1 class="font-display text-2xl font-semibold tracking-tight">Scanner un livre</h1>
     <p class="mt-1 text-sm text-ink-muted">Visez le code-barres au dos de l'ouvrage.</p>
 
+    {#- Retour d'un enregistrement fait depuis le scanner (BookController::new()) :
+        le livre est au catalogue, sa fiche a un toucher pour qui veut la relire. -#}
+    {% for ajout in app.flashes('ajout') %}
+        <p class="alert alert-success mt-4 text-sm" role="status">
+            « {{ ajout.titre }} » ajouté au catalogue ·
+            <a href="{{ ajout.url }}" class="font-medium underline underline-offset-2 hover:no-underline">Voir la fiche</a>
+        </p>
+    {% endfor %}
+
     <div class="surface mt-5 p-4">
         <video data-barcode-scanner-target="video"
                class="hidden aspect-video w-full max-w-md rounded-xs bg-ink object-cover"

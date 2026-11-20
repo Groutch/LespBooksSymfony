@@ -34,12 +34,11 @@
 
         {{ fields.fields(form, knownCategories) }}
 
-        <div class="flex flex-wrap gap-2">
+        {#- Un seul bouton : arrive par le scanner, il y ramene (BookController::new()),
+            sinon il mene a la fiche. -#}
+        <div class="{{ fields.actionBarClasses() }}">
             <button type="submit" class="btn btn-primary">Enregistrer</button>
-            <button type="submit" name="saveAndScan" value="1" class="btn btn-ghost border-accent text-accent">
-                Enregistrer et scanner le suivant
-            </button>
-            <a href="{{ path('admin_book_index') }}" class="btn btn-ghost">Annuler</a>
+            <a href="{{ prefillIsbn ? path('admin_book_scan') : path('admin_book_index') }}" class="btn btn-ghost">Annuler</a>
         </div>
     {{ form_end(form) }}
 </div>

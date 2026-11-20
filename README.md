@@ -48,8 +48,10 @@ Réservé aux comptes `ROLE_ADMIN`. L'interface dit « Gestion »
   publique. On y arrive par le scan d'un livre connu, depuis les listes, après une modification
   et après un ajout fait sans ISBN. « le ranger » et « Changer de place » y ouvrent une page
   courte, le rayon en grandes cases et la position sur l'étagère, au lieu du formulaire complet.
-- **Photo de couverture** : « Photographier la couverture » ouvre l'appareil photo du téléphone,
-  sans passer par sa galerie. Le cadre se pose seul sur le livre, quatre poignées permettent de
+- **Photo de couverture** : « Photographier la couverture » ouvre un viseur dans l'application ;
+  un toucher sur le déclencheur mène directement au recadrage. L'appareil photo du système,
+  resté en recours si la caméra est inaccessible, imposait après chaque prise un écran
+  « Réessayer / OK » qu'aucune page ne peut sauter. Le cadre se pose seul sur le livre, quatre poignées permettent de
   l'ajuster (et deux boutons de tourner la photo), puis la couverture est redressée à plat, dans
   ses vraies proportions, et légèrement rehaussée avant l'envoi. Tout est calculé dans le
   navigateur, sans dépendance (`assets/lib/couverture.js`) ; « Choisir une image » passe par le

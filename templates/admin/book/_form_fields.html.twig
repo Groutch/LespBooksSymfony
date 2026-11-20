@@ -59,13 +59,40 @@
     </div>
 {% endmacro %}
 
-{#- Ecran de recadrage, plein ecran comme l'appareil photo : la photo, le cadre
-    a quatre poignees (assez grosses pour le doigt), deux quarts de tour, puis
-    Reprendre ou Valider. Le cadre est dessine en SVG par-dessus la photo. -#}
+{#- Plein ecran, en deux volets. Le viseur : la camera dans la page et un
+    declencheur — l'appareil photo du systeme imposait apres chaque prise un ecran
+    « Reessayer / OK », une etape de trop a chaque livre. Le recadrage : la photo,
+    le cadre a quatre poignees (assez grosses pour le doigt), deux quarts de tour,
+    puis Reprendre ou Valider ; le cadre est dessine en SVG par-dessus la photo.
+    `hidden` vit sur les enveloppes des volets, dont rien d'autre ne fixe le display. -#}
 {% macro recadrage() %}
-    <dialog data-cover-capture-target="editor" aria-labelledby="recadrage-titre"
-            data-action="resize@window->cover-capture#dessinerCadre"
+    <dialog data-cover-capture-target="editor" aria-label="Photo de couverture"
+            data-action="resize@window->cover-capture#dessinerCadre close->cover-capture#ferme"
             class="m-0 h-dvh max-h-none w-screen max-w-none bg-ink p-0 text-paper backdrop:bg-ink">
+        <div data-cover-capture-target="viseur" class="hidden h-full">
+            <div class="flex h-full flex-col pt-[env(safe-area-inset-top)]">
+                <div class="flex items-center gap-2 px-2 pt-2">
+                    <button type="button" data-action="cover-capture#annuler" class="min-h-11 px-3 text-sm">Annuler</button>
+                    <p class="font-medium outline-none" tabindex="-1" autofocus>Photographier la couverture</p>
+                </div>
+                <p data-cover-capture-target="viseurStatus" role="status" class="px-5 pb-3 text-sm text-paper/80"></p>
+
+                <div class="flex min-h-0 flex-1 items-center justify-center px-4">
+                    <video data-cover-capture-target="video" playsinline muted
+                           class="block h-auto max-h-full w-auto max-w-full rounded-xs"></video>
+                </div>
+
+                <div class="flex flex-col items-center gap-3 px-4 pt-5 pb-[calc(1.25rem_+_env(safe-area-inset-bottom))]">
+                    <button type="button" data-cover-capture-target="shutter" data-action="cover-capture#declencher"
+                            aria-label="Prendre la photo" disabled
+                            class="size-18 cursor-pointer rounded-full border-4 border-paper bg-paper/85 transition active:scale-95 disabled:opacity-40"></button>
+                    <button type="button" data-cover-capture-target="natif" data-action="cover-capture#appareilNatif"
+                            class="hidden min-h-11 text-sm underline underline-offset-2">Utiliser l'appareil photo du téléphone</button>
+                </div>
+            </div>
+        </div>
+
+        <div data-cover-capture-target="recadreur" class="hidden h-full">
         <div class="flex h-full flex-col pt-[env(safe-area-inset-top)]">
             <div class="flex items-center gap-2 px-2 pt-2">
                 <button type="button" data-action="cover-capture#annuler" class="min-h-11 px-3 text-sm">Annuler</button>
@@ -109,6 +136,7 @@
                 <button type="button" data-action="cover-capture#reprendre" class="btn border-paper/40 text-paper hover:bg-paper/10">Reprendre</button>
                 <button type="button" data-cover-capture-target="validate" data-action="cover-capture#valider" class="btn btn-primary">Valider</button>
             </div>
+        </div>
         </div>
     </dialog>
 {% endmacro %}

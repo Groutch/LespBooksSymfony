@@ -32,11 +32,11 @@
         "type": "js"
     },
     "\/assets\/controllers\/cover_capture_controller.js": {
-        "path": "\/assets\/controllers\/cover_capture_controller-w7vPTNv.js",
+        "path": "\/assets\/controllers\/cover_capture_controller-MwhJ6na.js",
         "type": "js"
     },
     "\/assets\/lib\/couverture.js": {
-        "path": "\/assets\/lib\/couverture-ox39AiM.js",
+        "path": "\/assets\/lib\/couverture-tpAP0nM.js",
         "type": "js"
     },
     "\/assets\/controllers\/csrf_protection_controller.js": {
@@ -44,7 +44,7 @@
         "type": "js"
     },
     "\/assets\/styles\/app.css": {
-        "path": "\/assets\/styles\/app-9X-cOx-.css",
+        "path": "\/assets\/styles\/app-vBw2YQn.css",
         "type": "css"
     },
     "@hotwired\/stimulus": {

@@ -18,39 +18,131 @@ const RAYON_POIGNEE = 14;
 const PORTEE_DOIGT = 44;
 
 /**
- * Photographier une couverture comme on numerise un document : l'appareil photo
- * du telephone, puis un ecran de recadrage ou le cadre se pose seul sur le livre
+ * Photographier une couverture comme on numerise un document : un viseur dans
+ * la page, puis un ecran de recadrage ou le cadre se pose seul sur le livre
  * (assets/lib/couverture.js), quatre poignees pour l'ajuster, et une image
  * redressee a plat qui remplace le fichier du formulaire.
+ *
+ * Le viseur est dans la page plutot que l'appareil photo du systeme : celui-ci
+ * impose apres chaque prise un ecran « Reessayer / OK » qu'aucune page ne peut
+ * sauter, une etape de trop a chaque livre. Il reste le recours quand la camera
+ * est inaccessible ; « Choisir une image » passe par le meme recadrage.
  *
  * Le champ fichier d'origine reste celui qui part avec le formulaire : sans
  * JavaScript, il s'affiche et suffit ; avec, il est masque et recoit la
  * couverture redressee. Rien ne change cote serveur.
  */
 export default class extends Controller {
-    static targets = ['input', 'actions', 'camera', 'gallery', 'result', 'message', 'editor', 'canvas', 'overlay', 'polygon', 'handle', 'status', 'validate'];
+    static targets = [
+        'input', 'actions', 'camera', 'gallery', 'result', 'message', 'editor',
+        'viseur', 'video', 'viseurStatus', 'shutter', 'natif',
+        'recadreur', 'canvas', 'overlay', 'polygon', 'handle', 'status', 'validate',
+    ];
 
     connect() {
         this.inputTarget.classList.add('hidden');
         this.actionsTarget.classList.remove('hidden');
         this.saisi = null;
+        this.flux = null;
+        // Chaque extinction invalide les allumages encore en vol : un flux arrive
+        // apres coup est coupe aussitot, sans quoi le voyant resterait allume.
+        this.generation = 0;
     }
 
     disconnect() {
+        this.eteindreCamera();
         if (this.apercu) URL.revokeObjectURL(this.apercu);
     }
 
+    // --- Prise de vue ----------------------------------------------------------
+
+    async photographier() {
+        this.origine = 'viseur';
+
+        if (!navigator.mediaDevices?.getUserMedia) {
+            this.appareilNatif();
+            return;
+        }
+
+        this.afficherVolet('viseur');
+        if (!this.editorTarget.open) this.editorTarget.showModal();
+        await this.allumerCamera();
+    }
+
+    async allumerCamera() {
+        this.eteindreCamera();
+        const generation = this.generation;
+        this.natifTarget.classList.add('hidden');
+        this.shutterTarget.disabled = true;
+        this.viseurStatusTarget.textContent = 'Activation de la caméra…';
+
+        let flux;
+        try {
+            flux = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment', width: { ideal: 3840 }, height: { ideal: 2160 } },
+                audio: false,
+            });
+        } catch (erreur) {
+            if (generation === this.generation) {
+                this.viseurStatusTarget.textContent = "Caméra inaccessible : passez par l'appareil photo du téléphone.";
+                this.natifTarget.classList.remove('hidden');
+            }
+            return;
+        }
+
+        if (generation !== this.generation || !this.editorTarget.open) {
+            flux.getTracks().forEach((piste) => piste.stop());
+            return;
+        }
+
+        this.flux = flux;
+        this.videoTarget.srcObject = flux;
+        try {
+            await this.videoTarget.play();
+        } catch (erreur) {
+            return;
+        }
+
+        if (generation !== this.generation) return;
+
+        this.shutterTarget.disabled = false;
+        this.viseurStatusTarget.textContent = 'Cadrez la couverture, puis déclenchez.';
+    }
+
+    eteindreCamera() {
+        this.generation += 1;
+        this.flux?.getTracks().forEach((piste) => piste.stop());
+        this.flux = null;
+        if (this.hasVideoTarget) this.videoTarget.srcObject = null;
+    }
+
     /**
-     * `capture` ouvre directement l'appareil photo : la photo revient a la page
-     * sans passer par la galerie du telephone.
+     * Fige l'image du flux, telle qu'on la voit : son orientation est toujours
+     * la bonne, ce que la prise de photo pleine resolution (ImageCapture) ne
+     * garantit pas sur tous les Android.
      */
-    photographier() {
-        this.origine = this.cameraTarget;
+    declencher() {
+        if (!this.flux || this.videoTarget.videoWidth === 0) return;
+
+        this.photo = this.versCanvas(this.videoTarget, COTE_PHOTO);
+        this.eteindreCamera();
+
+        if (typeof navigator.vibrate === 'function') {
+            navigator.vibrate(40);
+        }
+
+        this.ouvrirRecadrage();
+    }
+
+    /** Recours : l'appareil photo du systeme, avec son ecran de confirmation. */
+    appareilNatif() {
+        this.origine = 'camera';
+        if (this.editorTarget.open) this.editorTarget.close();
         this.cameraTarget.click();
     }
 
     choisir() {
-        this.origine = this.galleryTarget;
+        this.origine = 'galerie';
         this.galleryTarget.click();
     }
 
@@ -63,16 +155,14 @@ export default class extends Controller {
         let image;
         try {
             image = await this.decoder(fichier);
-        } catch (error) {
+        } catch (erreur) {
             this.signaler("Cette image n'a pas pu être ouverte. Reprenez la photo, ou choisissez-en une autre.");
             return;
         }
 
         this.signaler('');
         this.photo = this.versCanvas(image, COTE_PHOTO);
-        this.poserCadre();
-        this.editorTarget.showModal();
-        this.dessiner();
+        this.ouvrirRecadrage();
     }
 
     decoder(fichier) {
@@ -92,12 +182,13 @@ export default class extends Controller {
     }
 
     /**
-     * Copie reduite dans un canvas. Le navigateur y applique deja l'orientation
-     * EXIF : une photo prise en portrait ne revient pas couchee.
+     * Copie reduite dans un canvas, d'une image ou d'une video. Le navigateur y
+     * applique deja l'orientation EXIF : une photo prise en portrait ne revient
+     * pas couchee.
      */
     versCanvas(source, coteMax) {
-        const largeur = source.naturalWidth ?? source.width;
-        const hauteur = source.naturalHeight ?? source.height;
+        const largeur = source.naturalWidth || source.videoWidth || source.width;
+        const hauteur = source.naturalHeight || source.videoHeight || source.height;
         const facteur = Math.min(1, coteMax / Math.max(largeur, hauteur));
         const canvas = document.createElement('canvas');
         canvas.width = Math.max(1, Math.round(largeur * facteur));
@@ -105,6 +196,20 @@ export default class extends Controller {
         canvas.getContext('2d', { willReadFrequently: true }).drawImage(source, 0, 0, canvas.width, canvas.height);
 
         return canvas;
+    }
+
+    // --- Recadrage ---------------------------------------------------------------
+
+    ouvrirRecadrage() {
+        this.afficherVolet('recadreur');
+        if (!this.editorTarget.open) this.editorTarget.showModal();
+        this.poserCadre();
+        this.dessiner();
+    }
+
+    afficherVolet(volet) {
+        this.viseurTarget.classList.toggle('hidden', volet !== 'viseur');
+        this.recadreurTarget.classList.toggle('hidden', volet !== 'recadreur');
     }
 
     poserCadre() {
@@ -135,7 +240,7 @@ export default class extends Controller {
 
     /** Appele aussi au redimensionnement : les poignees gardent leur taille a l'ecran. */
     dessinerCadre() {
-        if (!this.photo || !this.editorTarget.open) return;
+        if (!this.photo || !this.editorTarget.open || this.recadreurTarget.classList.contains('hidden')) return;
 
         const echelle = this.echelle();
         this.polygonTarget.setAttribute('points', this.coins.map(({ x, y }) => `${x},${y}`).join(' '));
@@ -214,13 +319,25 @@ export default class extends Controller {
         this.dessiner();
     }
 
+    /** Retour au viseur, ou au selecteur d'ou venait la photo. */
     reprendre() {
+        if (this.origine === 'viseur') {
+            this.afficherVolet('viseur');
+            this.allumerCamera();
+            return;
+        }
+
         this.editorTarget.close();
-        (this.origine ?? this.cameraTarget).click();
+        (this.origine === 'galerie' ? this.galleryTarget : this.cameraTarget).click();
     }
 
     annuler() {
         this.editorTarget.close();
+    }
+
+    /** Fermeture, quelle qu'en soit la cause (Annuler, touche retour) : la camera s'eteint. */
+    ferme() {
+        this.eteindreCamera();
     }
 
     async valider() {
@@ -249,7 +366,7 @@ export default class extends Controller {
             this.editorTarget.close();
             // La couverture proposee par la recherche ISBN n'a plus lieu d'etre.
             this.dispatch('remplacee');
-        } catch (error) {
+        } catch (erreur) {
             this.editorTarget.close();
             // Navigateur trop ancien pour garnir un champ fichier : on rend le
             // champ d'origine, qui fonctionne toujours.

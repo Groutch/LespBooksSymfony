@@ -516,10 +516,11 @@ reste valide sur le serveur.
 make release
 ```
 
-Cette commande sauvegarde la base et les couvertures de production (voir
-[Sauvegardes](#sauvegardes)), construit et pousse la branche `deploy`, attend qu'OVH ait répliqué
-le commit livré, vide le cache de production, puis vérifie que l'accueil répond 200 et que
-`.env.local` n'est pas servi. Une sauvegarde ratée arrête la livraison avant tout envoi.
+Cette commande annonce les migrations que la livraison apporte, sauvegarde la base et les
+couvertures de production (voir [Sauvegardes](#sauvegardes)), construit et pousse la branche
+`deploy`, attend qu'OVH ait répliqué le commit livré, vide le cache de production, applique les
+migrations, puis vérifie que l'accueil répond 200 et que `.env.local` n'est pas servi. Une
+sauvegarde ratée arrête la livraison avant tout envoi.
 
 Les coordonnées de l'hébergement se lisent dans `.deploy.local`, à la racine du projet et jamais
 versionné. La syntaxe du shell (`CLE=valeur`) comme celle de Make (`CLE = valeur`) y sont
@@ -547,16 +548,28 @@ make prod-refresh      # vide le cache de production, à faire après tout push 
 
 ### Livraison qui comporte une migration
 
-**Livrer d'abord, migrer ensuite :**
+`make release` s'en charge. Avant tout envoi, il liste les migrations que la livraison apporte,
+avec leur description, ainsi que celles qui attendraient déjà sur le serveur, et demande
+confirmation : un refus n'envoie rien. Après la réplication, il vide le cache puis les applique
+aussitôt. Sans terminal pour répondre, `make release MIGRER=1` confirme d'avance.
+
+Pourquoi aussitôt : une migration qui **ajoute** une colonne casse le site tant qu'elle n'est pas
+appliquée, puisque le nouveau code la réclame dès sa mise en ligne. Appliquée à la main après
+coup, elle laissait des erreurs 500 le temps de taper la commande ; la fenêtre se réduit
+désormais à quelques secondes. Migrer avant de livrer est impossible : le fichier de migration
+n'arrive sur le serveur qu'avec le code.
+
+Une migration qui **renomme** une colonne ou en change le type casse l'ancien code comme le
+nouveau pendant ces quelques secondes. La découper en deux livraisons : ajouter la nouvelle
+colonne et la remplir, puis retirer l'ancienne une fois le code passé dessus.
+
+Si une migration échoue, `release.sh` s'arrête en désignant la sauvegarde faite juste avant.
+Pour consulter l'état ou rejouer à la main :
 
 ```bash
-make release              # le fichier de migration doit d'abord être sur le serveur
-make migrate-prod         # affiche les migrations en attente
+make migrate-prod         # migrations en attente sur le serveur
 make migrate-prod RUN=1   # les applique, puis vide le cache
 ```
-
-Dans l'ordre inverse, la migration retirerait des colonnes que l'ancien code, encore en ligne,
-s'attend à trouver.
 
 ### Sauvegardes
 

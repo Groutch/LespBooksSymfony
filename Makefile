@@ -63,7 +63,7 @@ ssh-key: ## Installe votre cle publique sur l'hebergement (mot de passe demande 
 
 # Les scripts lisent eux-memes .deploy.local, dans la syntaxe de Make comme dans
 # celle du shell (deploy/commun.sh).
-release: ## Livraison complete : sauvegarde, pousse, attend OVH, vide le cache de production
+release: ## Livraison complete : sauvegarde, pousse, attend OVH, vide le cache, migre (MIGRER=1 sans terminal)
 	./deploy/release.sh
 
 backup: ## Sauvegarde la base et les couvertures de production dans backups/

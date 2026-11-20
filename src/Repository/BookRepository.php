@@ -66,6 +66,12 @@ class BookRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
+    /**
+     * Les filtres sur les auteurs et les catégories passent par leurs propres
+     * jointures, jamais par celles qui chargent les collections : une condition
+     * posée sur `a` ou `c` ne ramènerait que les lignes qui la satisfont, et le
+     * livre filtré sur un auteur perdrait ses co-auteurs à l'affichage.
+     */
     private function createSearchQueryBuilder(BookSearchCriteria $criteria): QueryBuilder
     {
         $qb = $this->createQueryBuilder('b')
@@ -75,27 +81,31 @@ class BookRepository extends ServiceEntityRepository
             ->leftJoin('b.images', 'i')->addSelect('i');
 
         if (null !== $criteria->query && '' !== trim($criteria->query)) {
-            $qb->andWhere($qb->expr()->orX(
-                'b.title LIKE :q',
-                'b.subtitle LIKE :q',
-                'b.description LIKE :q',
-                'b.publisher LIKE :q',
-                'b.isbn13 LIKE :q',
-                'b.isbn10 LIKE :q',
-                'a.name LIKE :q',
-            ))->setParameter('q', '%'.trim($criteria->query).'%');
+            $qb->leftJoin('b.authors', 'auteurCherche')
+                ->andWhere($qb->expr()->orX(
+                    'b.title LIKE :q',
+                    'b.subtitle LIKE :q',
+                    'b.description LIKE :q',
+                    'b.publisher LIKE :q',
+                    'b.isbn13 LIKE :q',
+                    'b.isbn10 LIKE :q',
+                    'auteurCherche.name LIKE :q',
+                ))->setParameter('q', '%'.trim($criteria->query).'%');
         }
 
         if (null !== $criteria->category) {
-            $qb->andWhere('c.slug = :categorySlug')->setParameter('categorySlug', $criteria->category);
+            $qb->innerJoin('b.categories', 'categorieFiltre', Join::WITH, 'categorieFiltre.slug = :categorySlug')
+                ->setParameter('categorySlug', $criteria->category);
         }
 
+        // Un seul rayon par livre : filtrer sur la jointure chargée est sans danger.
         if (null !== $criteria->genre) {
             $qb->andWhere('g.slug = :genreSlug')->setParameter('genreSlug', $criteria->genre);
         }
 
         if (null !== $criteria->author) {
-            $qb->andWhere('a.slug = :authorSlug')->setParameter('authorSlug', $criteria->author);
+            $qb->innerJoin('b.authors', 'auteurFiltre', Join::WITH, 'auteurFiltre.slug = :authorSlug')
+                ->setParameter('authorSlug', $criteria->author);
         }
 
         if (null !== $criteria->yearFrom) {

@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller;
 
+use App\Entity\Author;
 use App\Entity\Book;
 use App\Entity\Category;
 use App\Entity\Genre;
 use App\Entity\Loan;
+use App\Model\BookSearchCriteria;
+use App\Repository\BookRepository;
 use App\Tests\AdminWebTestCase;
 
 class CatalogTest extends AdminWebTestCase
@@ -32,6 +35,49 @@ class CatalogTest extends AdminWebTestCase
         self::assertResponseIsSuccessful();
         self::assertSame(1, $crawler->filter('article')->count());
         self::assertSelectorTextContains('article', 'Germinal');
+    }
+
+    /**
+     * Filtrer sur un auteur ne doit pas filtrer les auteurs affiches : la jointure
+     * qui sert au filtre ne peut pas etre celle qui charge la collection, sinon le
+     * livre ne ramene que l'auteur cherche.
+     */
+    public function testFilteringByOneAuthorKeepsTheCoAuthorsOnTheCard(): void
+    {
+        $this->createCoWrittenBook();
+
+        $crawler = $this->client->request('GET', '/catalogue?auteur=neil-gaiman');
+
+        self::assertSame(1, $crawler->filter('article')->count());
+        self::assertSelectorTextContains('article', 'Terry Pratchett');
+        self::assertSelectorTextContains('article', 'Neil Gaiman');
+    }
+
+    public function testSearchingForOneAuthorNameKeepsTheCoAuthorsOnTheCard(): void
+    {
+        $this->createCoWrittenBook();
+
+        $crawler = $this->client->request('GET', '/catalogue?q=Gaiman');
+
+        self::assertSame(1, $crawler->filter('article')->count());
+        self::assertSelectorTextContains('article', 'Terry Pratchett');
+    }
+
+    public function testFilteringByOneCategoryStillLoadsAllTheBookCategories(): void
+    {
+        $fantasy = (new Category())->setName('Fantasy')->setSlug('fantasy');
+        $humour = (new Category())->setName('Humour')->setSlug('humour');
+        $this->entityManager->persist($fantasy);
+        $this->entityManager->persist($humour);
+        $this->createBook('De bons présages')->addCategory($fantasy)->addCategory($humour);
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $books = iterator_to_array(static::getContainer()->get(BookRepository::class)
+            ->search(new BookSearchCriteria(category: 'fantasy')));
+
+        self::assertCount(1, $books);
+        self::assertCount(2, $books[0]->getCategories());
     }
 
     public function testEmptyFiltersDoNotHideTheWholeCatalogue(): void
@@ -141,5 +187,23 @@ class CatalogTest extends AdminWebTestCase
         $this->entityManager->flush();
 
         return $book;
+    }
+
+    /**
+     * L'EntityManager est vide ensuite : le livre deja en memoire, avec ses deux
+     * auteurs, masquerait sinon une collection mal relue par la recherche.
+     */
+    private function createCoWrittenBook(): void
+    {
+        $book = $this->createBook('De bons présages');
+
+        foreach (['Terry Pratchett' => 'terry-pratchett', 'Neil Gaiman' => 'neil-gaiman'] as $name => $slug) {
+            $author = (new Author())->setName($name)->setSlug($slug);
+            $this->entityManager->persist($author);
+            $book->addAuthor($author);
+        }
+
+        $this->entityManager->flush();
+        $this->entityManager->clear();
     }
 }

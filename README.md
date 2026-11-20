@@ -647,3 +647,20 @@ ssh -t identifiant@serveur \
 
 ssh identifiant@serveur "cd lesp/public && tar -xzf -" < backups/couvertures-AAAA-MM-JJ-HHMMSS.tar.gz
 ```
+
+---
+
+## Dépannage
+
+| Symptôme | Cause et remède |
+|---|---|
+| Toutes les pages répondent 500 en local | Tailwind n'est pas compilé : `make assets`. |
+| Une classe ou un style modifié ne s'affiche pas | `make assets` recompile et vide les deux caches (hôte et conteneur). Une classe mal orthographiée ne produit rien, sans erreur : la chercher dans `var/tailwind/app.built.css`. |
+| Les couvertures répondent 500 en local | Le serveur intégré de PHP exécute les images comme des scripts : passer par `make up` (Apache). |
+| La caméra ne démarre pas sur un téléphone | Elle exige HTTPS ou `localhost` (voir [Tester le scan sur un téléphone](#tester-le-scan-sur-un-téléphone)). |
+| La connexion échoue | `var/log/dev.log` : *Authentication failure*, mauvais mot de passe (le remplacer par `app:user:create` sur le même e-mail) ; *CSRF validation failed*, origine de la requête. |
+| Le remplissage d'un ISBN déçoit | `php bin/console app:isbn:lookup <isbn>` montre ce que répond chaque source. Sans clé `GOOGLE_BOOKS_API_KEY`, Google Books répond souvent 429. |
+| Presque tous les tests en 500, « A non-empty secret is required » | `APP_SECRET` vide exporté par le terminal : passer par `make test` (voir [Tests](#tests)). |
+| `make release` refuse de partir | Le message en donne la raison : branche, fichiers non commités, `git push` manquant, tests, migrations à confirmer. |
+| En ligne, page à moitié habillée | Cache de production non vidé après un push manuel : `make prod-refresh`. |
+| Erreur 500 en ligne | `make prod-logs` affiche l'erreur, `make prod-check` contrôle le reste du site. |

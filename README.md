@@ -491,6 +491,10 @@ php bin/phpunit --filter testABookCannotBeLentTwiceAtTheSameTime tests/Controlle
 - `phpunit.dist.xml` est réglé en `failOnDeprecation`, `failOnWarning` et `failOnNotice` : une
   dépréciation fait échouer la suite.
 - Un formulaire invalide réaffiché répond **422**, pas 200.
+- Certains terminaux d'éditeur exportent les valeurs du `.env`, dont un `APP_SECRET` vide qui
+  primerait sur `.env.dev` et `.env.test`. Le Makefile ne le transmet pas et les tests
+  l'ignorent ; une commande `php bin/console` lancée à la main y reste sensible
+  (`env -u APP_SECRET php bin/console …`).
 - Les tests s'appuient surtout sur les **textes** (libellés de boutons, contenu de la page), et
   peu sur le balisage. Quelques points de balisage sont tout de même vérifiés : une carte du
   catalogue est un `<article>`, le manifeste PWA et le `theme-color` sienne n'apparaissent que dans

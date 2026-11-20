@@ -5,6 +5,13 @@ DC := APP_UID=$(shell id -u) APP_GID=$(shell id -g) docker compose
 # -u www-data : sinon les fichiers ecrits depuis le conteneur appartiennent a root sur l'hote.
 EXEC := $(DC) exec -u www-data web
 
+# Un shell lance depuis l'editeur peut exporter les valeurs du .env, dont un
+# APP_SECRET vide : il primerait sur .env.dev et .env.test, et lint comme tests
+# echoueraient sur « A non-empty secret is required ». Vide, il n'est pas transmis.
+ifeq ($(strip $(APP_SECRET)),)
+unexport APP_SECRET
+endif
+
 # Coordonnees de l'hebergement, non versionnees.
 -include .deploy.local
 DEPLOY_PATH ?= lesp

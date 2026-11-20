@@ -229,6 +229,17 @@ test('un livre photographie en biais garde ses vraies proportions', () => {
     assert.ok(Math.abs(largeur / hauteur - 0.6) < 0.02, `rapport ${(largeur / hauteur).toFixed(3)} au lieu de 0,6`);
 });
 
+test('vu presque a la verticale, un seul point de fuite suffit', () => {
+    // Inclinaison sans pivot : les bords haut et bas restent paralleles, la
+    // focale n'est plus mesurable. La vraie (0,7 diagonale) differe expres de
+    // celle que le calcul suppose (0,8) : le rapport doit rester juste.
+    const centre = { x: 150, y: 200 };
+    const coins = projeter(0.6, 1, 35, 0, 0.7 * 500, centre);
+    const { largeur, hauteur } = dimensionsRedressees(coins, 1600, centre);
+
+    assert.ok(Math.abs(largeur / hauteur - 0.6) < 0.03, `rapport ${(largeur / hauteur).toFixed(3)} au lieu de 0,6`);
+});
+
 test('de face, les proportions vues sont gardees', () => {
     const coins = [{ x: 60, y: 50 }, { x: 240, y: 50 }, { x: 240, y: 350 }, { x: 60, y: 350 }];
 

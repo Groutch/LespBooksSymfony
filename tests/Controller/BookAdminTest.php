@@ -57,6 +57,10 @@ class BookAdminTest extends AdminWebTestCase
         self::assertSelectorTextContains('[data-cover-capture-target="actions"]', 'Photographier la couverture');
         self::assertSelectorTextContains('[data-cover-capture-target="actions"]', 'Choisir une image');
         self::assertSelectorExists('dialog[data-cover-capture-target="editor"]');
+        // Un viseur dans la page : l'appareil photo du systeme imposait un ecran
+        // « Reessayer / OK » apres chaque prise. Il reste en recours.
+        self::assertSelectorExists('[data-cover-capture-target="viseur"] video[data-cover-capture-target="video"][playsinline]');
+        self::assertSelectorExists('button[data-cover-capture-target="shutter"][aria-label="Prendre la photo"]');
         // La photo remplace la couverture que propose la recherche ISBN.
         self::assertSelectorExists('[data-action~="cover-capture:remplacee->isbn-autofill#oublierCouverture"]');
     }

@@ -215,16 +215,19 @@ export function rapportReel([hg, hd, bd, bg], { x: u0, y: v0 }) {
     const n2 = m2.map((v, i) => k2 * v - m1[i]);
     const n3 = m3.map((v, i) => k3 * v - m1[i]);
 
-    if (Math.abs(n2[2]) < 1e-9 || Math.abs(n3[2]) < 1e-9) return null;
-
     const f2 = -(
         (n2[0] * n3[0] - (n2[0] * n3[2] + n2[2] * n3[0]) * u0 + n2[2] * n3[2] * u0 * u0)
         + (n2[1] * n3[1] - (n2[1] * n3[2] + n2[2] * n3[1]) * v0 + n2[2] * n3[2] * v0 * v0)
     ) / (n2[2] * n3[2]);
 
-    if (!(f2 > 0)) return null;
-
-    const f = Math.sqrt(f2);
+    // La focale ne se mesure qu'avec deux points de fuite. Photo prise presque a
+    // la verticale, deux bords restent paralleles : l'estimation diverge (un
+    // livre sortait trop large, 0,76 au lieu de 0,64). On suppose alors celle
+    // d'un telephone, environ 0,8 fois la diagonale de l'image : le rapport se
+    // calcule tres bien avec une focale connue, meme a un seul point de fuite.
+    const diagonale = 2 * Math.hypot(u0, v0);
+    const mesuree = Number.isFinite(f2) && f2 > 0 ? Math.sqrt(f2) : 0;
+    const f = mesuree > 0.3 * diagonale && mesuree < 3 * diagonale ? mesuree : 0.8 * diagonale;
     const norme = (n) => ((n[0] - u0 * n[2]) / f) ** 2 + ((n[1] - v0 * n[2]) / f) ** 2 + n[2] ** 2;
     const rapport = Math.sqrt(norme(n2) / norme(n3));
 

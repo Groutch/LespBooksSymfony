@@ -19,7 +19,7 @@
 
     <div class="flex flex-wrap gap-2">
         <button type="submit" class="btn btn-primary">Enregistrer le prêt</button>
-        <a href="{{ path('admin_book_show', {id: book.id}) }}" class="btn btn-ghost">Annuler</a>
+        <a href="{{ urlAnnulation }}" class="btn btn-ghost">Annuler</a>
     </div>
 {{ form_end(form) }}
 {% endblock %}

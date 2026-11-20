@@ -42,13 +42,20 @@ class LoanController extends AbstractController
         ]);
     }
 
+    /**
+     * Les liens « Prêter » de la fiche et de la liste des livres passent leur
+     * adresse en `retour` : le prêt enregistré, on y revient, comme après Rendre
+     * ou Prolonger. Le formulaire se soumet à sa propre adresse et le conserve.
+     */
     #[Route('/livre/{id}/nouveau', name: 'admin_loan_new', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
     public function new(Request $request, Book $book): Response
     {
+        $retour = $this->cheminDeRetour($request->query->getString('retour'));
+
         if (!$book->isAvailable()) {
             $this->addFlash('error', \sprintf('« %s » est déjà prêté à %s.', $book->getTitle(), $book->getActiveLoan()?->getBorrowerName()));
 
-            return $this->redirectToRoute('admin_loan_index');
+            return $this->redirect($retour ?? $this->generateUrl('admin_loan_index'));
         }
 
         $loan = new Loan();
@@ -64,12 +71,14 @@ class LoanController extends AbstractController
 
             $this->addFlash('success', \sprintf('« %s » est prêté à %s.', $book->getTitle(), $loan->getBorrowerName()));
 
-            return $this->redirectToRoute('admin_loan_index');
+            return $this->redirect($retour ?? $this->generateUrl('admin_loan_index'));
         }
 
         return $this->render('admin/loan/new.html.twig', [
             'form' => $form,
             'book' => $book,
+            // « Annuler » ramène aussi d'où l'on vient, la fiche à défaut.
+            'urlAnnulation' => $retour ?? $this->generateUrl('admin_book_show', ['id' => $book->getId()]),
         ]);
     }
 
@@ -131,19 +140,26 @@ class LoanController extends AbstractController
 
     /**
      * Rendre et Prolonger se font depuis la liste des prets, la fiche d'un livre
-     * ou la liste des livres : on revient la ou l'on etait, filtres compris.
-     * Seul un chemin interne a la gestion est suivi, jamais une adresse
-     * exterieure ; a defaut, la liste des prets.
+     * ou la liste des livres : on revient la ou l'on etait, filtres compris ; a
+     * defaut, la liste des prets.
      */
     private function redirectBack(Request $request): Response
     {
-        $retour = $request->request->getString('retour');
+        return $this->redirect(
+            $this->cheminDeRetour($request->request->getString('retour'))
+            ?? $this->generateUrl('admin_loan_index'),
+        );
+    }
 
-        if (1 === preg_match('#^/admin(?:[/?]|$)#', $retour) && !str_contains($retour, '\\')) {
-            return $this->redirect($retour);
-        }
-
-        return $this->redirectToRoute('admin_loan_index');
+    /**
+     * Le chemin de retour vient du navigateur : seul un chemin interne a la
+     * gestion est suivi, jamais une adresse exterieure.
+     */
+    private function cheminDeRetour(string $retour): ?string
+    {
+        return 1 === preg_match('#^/admin(?:[/?]|$)#', $retour) && !str_contains($retour, '\\')
+            ? $retour
+            : null;
     }
 
     /**

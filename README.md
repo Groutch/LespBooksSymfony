@@ -1,4 +1,4 @@
-# Bibliothèque perso
+# Bibliothèque de Lespouey
 
 Application de la bibliothèque communautaire : les bénévoles cataloguent
 les livres en scannant leur code-barres au téléphone et suivent les prêts ; les
@@ -193,6 +193,7 @@ Elles se définissent dans `.env.local`, qui n'est jamais versionné.
 | `app.category_similarity_threshold` | `0.85` | Seuil au-delà duquel une catégorie proposée rejoint une catégorie existante (0 = tout fusionner, 1 = égalité stricte) |
 | `app.default_loan_days` | `28` | Échéance proposée pour un nouveau prêt, et durée ajoutée par une prolongation sans date. « Infos pratiques » l'annonce aux habitants. |
 | `app.borrower_retention_months` | `3` | Mois pendant lesquels le nom de l'emprunteur reste attaché à un prêt rendu. Annoncé sur `/confidentialite`. |
+| `app.backup_retention_days` | `30` | Jours de conservation des sauvegardes, qui contiennent aussi le nom des emprunteurs. Annoncé sur `/confidentialite`, et lu par `deploy/backup.sh` pour purger : garder la forme `clé: nombre` sur une seule ligne. |
 | `app.bibliotheque` | adresse, horaires, courriel, éditeur, directeur de la publication, hébergeur | Coordonnées publiques, exposées aux gabarits sous le nom `bibliotheque` (`twig.globals`). **Un horaire qui change se corrige ici, et nulle part ailleurs.** |
 
 Ils sont injectés par `#[Autowire('%app.…%')]`.
@@ -211,7 +212,10 @@ assets/
   fonts/                    Fraunces et Inter en woff2, sous-ensembles latin et latin-ext
   images/partage.png        aperçu des liens partagés (1200×630)
 config/                     configuration Symfony (sessions, sécurité, http_client…)
-deploy/                     build.sh, release.sh, migrate.sh : livraison vers OVH
+deploy/                     livraison vers OVH (release.sh orchestre build.sh, backup.sh,
+                            rafraichir.sh, controles.sh), migrate.sh, journaux.sh, dump.php
+                            (exécuté sur le serveur sans y être livré), et commun.sh
+                            (coordonnées et connexion SSH partagées)
 docker/                     image PHP 8.4 + Apache, php.ini, création de la base de test
 migrations/                 migrations Doctrine
 public/
@@ -268,7 +272,7 @@ tests/                      PHPUnit, sur une vraie base MySQL `app_test`
 | `admin_genre_edit` | GET, POST | `/admin/rayons/{id}/modifier` | Renommage |
 | `admin_genre_delete` | POST | `/admin/rayons/{id}/supprimer` | Suppression (CSRF), les livres restent |
 | `admin_loan_index` | GET | `/admin/prets` | Prêts en cours et derniers retours |
-| `admin_loan_new` | GET, POST | `/admin/prets/livre/{id}/nouveau` | Prêter un livre |
+| `admin_loan_new` | GET, POST | `/admin/prets/livre/{id}/nouveau?retour=…` | Prêter un livre, puis revenir à l'écran d'origine (`retour`, chemin `/admin…` seulement ; la liste des prêts à défaut) |
 | `admin_loan_return` | POST | `/admin/prets/{id}/rendre` | Retour (CSRF). Revient à l'écran d'origine (champ `retour`, chemin `/admin…` seulement). |
 | `admin_loan_extend` | POST | `/admin/prets/{id}/prolonger` | Prolongation (CSRF), même retour |
 
@@ -487,6 +491,10 @@ php bin/phpunit --filter testABookCannotBeLentTwiceAtTheSameTime tests/Controlle
 - `phpunit.dist.xml` est réglé en `failOnDeprecation`, `failOnWarning` et `failOnNotice` : une
   dépréciation fait échouer la suite.
 - Un formulaire invalide réaffiché répond **422**, pas 200.
+- Certains terminaux d'éditeur exportent les valeurs du `.env`, dont un `APP_SECRET` vide qui
+  primerait sur `.env.dev` et `.env.test`. Le Makefile ne le transmet pas et les tests
+  l'ignorent ; une commande `php bin/console` lancée à la main y reste sensible
+  (`env -u APP_SECRET php bin/console …`).
 - Les tests s'appuient surtout sur les **textes** (libellés de boutons, contenu de la page), et
   peu sur le balisage. Quelques points de balisage sont tout de même vérifiés : une carte du
   catalogue est un `<article>`, le manifeste PWA et le `theme-color` sienne n'apparaissent que dans
@@ -514,31 +522,145 @@ reste valide sur le serveur.
 make release
 ```
 
-Cette commande construit et pousse la branche `deploy`, attend qu'OVH ait répliqué le commit
-livré, vide le cache de production, puis vérifie que l'accueil répond 200 et que `.env.local`
-n'est pas servi.
+Cette commande annonce les migrations que la livraison apporte, sauvegarde la base et les
+couvertures de production (voir [Sauvegardes](#sauvegardes)), construit et pousse la branche
+`deploy`, attend qu'OVH ait répliqué le commit livré, vide le cache de production, applique les
+migrations, puis contrôle le site de l'extérieur (`make prod-check`, lançable à tout moment) :
+accueil et catalogue en 200, feuille de style compilée servie, **aucun cookie déposé sur
+l'accueil** (la promesse de `/confidentialite`) et `.env.local` refusé. Une sauvegarde ratée
+arrête la livraison avant tout envoi.
+
+Avant même de se connecter, elle refuse de partir :
+
+- hors de `main` : la livraison suivante, faite depuis `main`, effacerait sans prévenir ce qui
+  serait parti d'une branche de travail ;
+- si des fichiers sont modifiés **ou non suivis** : la livraison part de `HEAD`, sans eux, alors
+  que les tests tournent avec eux (une migration oubliée au `git add` passerait les tests) ;
+- si `main` diffère d'`origin/main` : commits non poussés, ou retard sur GitHub ;
+- si `make lint` ou `make test` échoue. La base MySQL de développement doit donc tourner
+  (`make up`). En urgence seulement, `make release SANS_TESTS=1` saute cette étape.
+
+Les coordonnées de l'hébergement se lisent dans `.deploy.local`, à la racine du projet et jamais
+versionné. La syntaxe du shell (`CLE=valeur`) comme celle de Make (`CLE = valeur`) y sont
+acceptées :
+
+```bash
+DEPLOY_SSH=identifiant@serveur-ssh-de-l-hebergeur
+DEPLOY_PATH=lesp                     # dossier du site sur l'hébergement
+DEPLOY_PHP=php                       # binaire PHP en ligne de commande
+DEPLOY_URL=https://exemple.fr        # facultatif : active les contrôles finaux
+BACKUP_DIR=backups                   # facultatif : dossier local des sauvegardes
+```
 
 Pourquoi ne pas se contenter de pousser ? Entre le push et la réplication, le serveur sert les
 nouveaux assets avec les anciens gabarits encore en cache : la page sort à moitié habillée. Cela
-ressemble à un bug de CSS, alors que c'est un problème d'ordre des opérations.
+ressemble à un bug de CSS, alors que c'est un problème d'ordre des opérations. `make release`
+réduit cette fenêtre à quelques secondes, sans pouvoir l'annuler : OVH n'exécute rien de
+lui-même après la réplication.
 
-En cas de besoin, les étapes existent séparément :
+En cas de besoin, les étapes existent séparément, **sans aucun des contrôles ci-dessus** :
 
 ```bash
 make deploy            # construit la branche deploy, sans la pousser
-make deploy PUSH=1     # construit et pousse ; le cache reste alors à vider
-make prod-refresh      # vide le cache de production, à faire après tout push manuel
+make deploy PUSH=1     # construit et pousse ; cache et migrations restent à faire
+make prod-refresh      # après tout push manuel : vide le cache, applique les migrations
+make prod-check        # contrôle le site en ligne
 ```
 
 ### Livraison qui comporte une migration
 
-**Livrer d'abord, migrer ensuite :**
+`make release` s'en charge. Avant tout envoi, il liste les migrations que la livraison apporte,
+avec leur description, ainsi que celles qui attendraient déjà sur le serveur, et demande
+confirmation : un refus n'envoie rien. Après la réplication, il vide le cache puis les applique
+aussitôt. Sans terminal pour répondre, `make release MIGRER=1` confirme d'avance.
+
+Pourquoi aussitôt : une migration qui **ajoute** une colonne casse le site tant qu'elle n'est pas
+appliquée, puisque le nouveau code la réclame dès sa mise en ligne. Appliquée à la main après
+coup, elle laissait des erreurs 500 le temps de taper la commande ; la fenêtre se réduit
+désormais à quelques secondes. Migrer avant de livrer est impossible : le fichier de migration
+n'arrive sur le serveur qu'avec le code.
+
+Une migration qui **renomme** une colonne ou en change le type casse l'ancien code comme le
+nouveau pendant ces quelques secondes. La découper en deux livraisons : ajouter la nouvelle
+colonne et la remplir, puis retirer l'ancienne une fois le code passé dessus.
+
+Si une migration échoue, `release.sh` s'arrête en désignant la sauvegarde faite juste avant.
+Pour consulter l'état ou rejouer à la main :
 
 ```bash
-make release              # le fichier de migration doit d'abord être sur le serveur
-make migrate-prod         # affiche les migrations en attente
+make migrate-prod         # migrations en attente sur le serveur
 make migrate-prod RUN=1   # les applique, puis vide le cache
 ```
 
-Dans l'ordre inverse, la migration retirerait des colonnes que l'ancien code, encore en ligne,
-s'attend à trouver.
+### Journaux de production
+
+```bash
+make prod-logs          # 100 dernières lignes du journal d'erreurs le plus récent
+make prod-logs N=500
+```
+
+En production, les erreurs s'écrivent sur l'hébergement dans `var/log/prod-AAAA-MM-JJ.log`, un
+fichier par jour gardé 14 jours (`config/packages/monolog.yaml`) — et non dans les journaux
+Apache de l'espace client, illisibles en SSH. Rien ne s'y écrit tant que tout va bien : à la
+première erreur d'une requête, Monolog écrit l'erreur et les messages qui la précèdent, sauf ceux
+de Doctrine, dont le SQL porterait des noms d'emprunteurs. Les avis de dépréciation vont à part,
+dans `prod.deprecations-AAAA-MM-JJ.log`.
+
+### Sauvegardes
+
+```bash
+make backup
+```
+
+Rapatrie sur cette machine, dans `backups/` (ignoré par Git), un dump de la base
+(`base-AAAA-MM-JJ-HHMMSS.sql.gz`) et une archive des couvertures
+(`couvertures-AAAA-MM-JJ-HHMMSS.tar.gz`). `make release` en fait une avant chaque livraison.
+
+- Le dump est produit **sur le serveur** par `deploy/dump.php`, qui n'y est pas livré : le
+  script part par SSH sur l'entrée standard de PHP. Une commande Symfony n'existerait sur le
+  serveur qu'une fois livrée (et après un `cache:clear`), alors que la sauvegarde précède la
+  livraison ; le script ne dépend que de `vendor/` et marche même si le site est cassé.
+- Il lit les identifiants de la base dans les `.env` du serveur, comme Symfony : ils ne
+  transitent jamais par la machine qui sauvegarde, et le mot de passe passe à `mysqldump` par un
+  fichier d'options temporaire, jamais dans la liste des processus.
+- Un dump qui ne se termine pas par `-- Dump completed` est jeté : on ne garde pas une
+  sauvegarde tronquée en croyant en avoir une.
+- **Les sauvegardes contiennent le nom des emprunteurs.** Elles ne sont lisibles que par le
+  compte qui les crée, et chaque sauvegarde supprime celles de plus de
+  `app.backup_retention_days` jours (30), durée annoncée sur `/confidentialite`. La purge n'a lieu
+  qu'au passage du script : une copie trop vieille disparaît à la sauvegarde suivante.
+
+**Vérifier une sauvegarde** en la chargeant dans la base locale (qu'elle **remplace**) :
+
+```bash
+gunzip -c backups/base-AAAA-MM-JJ-HHMMSS.sql.gz \
+  | docker compose exec -T database mysql -uapp -p'!ChangeMe!' app
+```
+
+**Restaurer la production** : la base, avec les identifiants du `.env.local` du serveur (le mot
+de passe est demandé), puis les couvertures.
+
+```bash
+scp backups/base-AAAA-MM-JJ-HHMMSS.sql.gz identifiant@serveur:
+ssh -t identifiant@serveur \
+  "gunzip -c base-AAAA-MM-JJ-HHMMSS.sql.gz | mysql --host=<hôte> --user=<utilisateur> -p <base> && rm base-AAAA-MM-JJ-HHMMSS.sql.gz"
+
+ssh identifiant@serveur "cd lesp/public && tar -xzf -" < backups/couvertures-AAAA-MM-JJ-HHMMSS.tar.gz
+```
+
+---
+
+## Dépannage
+
+| Symptôme | Cause et remède |
+|---|---|
+| Toutes les pages répondent 500 en local | Tailwind n'est pas compilé : `make assets`. |
+| Une classe ou un style modifié ne s'affiche pas | `make assets` recompile et vide les deux caches (hôte et conteneur). Une classe mal orthographiée ne produit rien, sans erreur : la chercher dans `var/tailwind/app.built.css`. |
+| Les couvertures répondent 500 en local | Le serveur intégré de PHP exécute les images comme des scripts : passer par `make up` (Apache). |
+| La caméra ne démarre pas sur un téléphone | Elle exige HTTPS ou `localhost` (voir [Tester le scan sur un téléphone](#tester-le-scan-sur-un-téléphone)). |
+| La connexion échoue | `var/log/dev.log` : *Authentication failure*, mauvais mot de passe (le remplacer par `app:user:create` sur le même e-mail) ; *CSRF validation failed*, origine de la requête. |
+| Le remplissage d'un ISBN déçoit | `php bin/console app:isbn:lookup <isbn>` montre ce que répond chaque source. Sans clé `GOOGLE_BOOKS_API_KEY`, Google Books répond souvent 429. |
+| Presque tous les tests en 500, « A non-empty secret is required » | `APP_SECRET` vide exporté par le terminal : passer par `make test` (voir [Tests](#tests)). |
+| `make release` refuse de partir | Le message en donne la raison : branche, fichiers non commités, `git push` manquant, tests, migrations à confirmer. |
+| En ligne, page à moitié habillée | Cache de production non vidé après un push manuel : `make prod-refresh`. |
+| Erreur 500 en ligne | `make prod-logs` affiche l'erreur, `make prod-check` contrôle le reste du site. |

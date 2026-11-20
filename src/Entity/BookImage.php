@@ -31,7 +31,9 @@ class BookImage
     private ?int $imageSize = null;
 
     /**
-     * Une seule image principale par livre, garantie par BookImageManager.
+     * Une seule image principale par livre : un téléversement retire ce statut aux
+     * autres (Admin\BookController::applyUploadedCover()), et BookImporter n'ajoute
+     * de couverture qu'à un livre qui n'en a aucune.
      * La colonne ne peut pas s'appeler « primary » : mot réservé MySQL que
      * Doctrine n'échappe pas dans les INSERT.
      */

@@ -165,11 +165,57 @@ class LoanAdminTest extends AdminWebTestCase
         self::assertResponseRedirects('/admin/prets');
     }
 
+    /** Comme Rendre et Prolonger : on revient la ou l'on a clique « Preter ». */
+    public function testLendingFromTheBookSheetComesBackToIt(): void
+    {
+        $book = $this->createBook('Le Horla');
+
+        $this->client->loginUser($this->createAdmin());
+        $crawler = $this->client->request('GET', '/admin/livres/'.$book->getId());
+        $crawler = $this->client->click($crawler->selectLink('Prêter ce livre')->link());
+        $this->client->submit($crawler->selectButton('Enregistrer le prêt')->form($this->borrower()));
+
+        self::assertResponseRedirects('/admin/livres/'.$book->getId());
+    }
+
+    public function testLendingFromAFilteredListComesBackToItFiltersIncluded(): void
+    {
+        $this->createBook('Le Horla');
+
+        $this->client->loginUser($this->createAdmin());
+        $crawler = $this->client->request('GET', '/admin/livres?q=Horla');
+        $crawler = $this->client->click($crawler->selectLink('Prêter')->link());
+        $this->client->submit($crawler->selectButton('Enregistrer le prêt')->form($this->borrower()));
+
+        self::assertResponseRedirects('/admin/livres?q=Horla');
+    }
+
+    public function testLendingNeverRedirectsOutsideTheVolunteerArea(): void
+    {
+        $book = $this->createBook('Le Horla');
+
+        $this->client->loginUser($this->createAdmin());
+        $exterieur = rawurlencode('https://exemple.invalid/admin');
+        $crawler = $this->client->request('GET', '/admin/prets/livre/'.$book->getId().'/nouveau?retour='.$exterieur);
+        $this->client->submit($crawler->selectButton('Enregistrer le prêt')->form($this->borrower()));
+
+        self::assertResponseRedirects('/admin/prets');
+    }
+
     public function testLoanScreenRejectsAnonymousVisitors(): void
     {
         $this->client->request('GET', '/admin/prets');
 
         self::assertResponseRedirects('/connexion');
+    }
+
+    /** @return array<string, string> */
+    private function borrower(): array
+    {
+        return [
+            'loan[borrowerFirstName]' => 'Marie',
+            'loan[borrowerLastName]' => 'Dupont',
+        ];
     }
 
     private function createBook(string $title): Book

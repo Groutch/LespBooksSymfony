@@ -59,7 +59,8 @@
                     le nom du livre est la seule chose qu'on cherche dans cette liste. -#}
                 <div class="flex w-full shrink-0 items-center justify-end gap-2 sm:w-auto sm:justify-start">
                     {% if book.available %}
-                        <a href="{{ path('admin_loan_new', {id: book.id}) }}" class="btn btn-ghost px-3 text-sm">Prêter</a>
+                        {#- Le pret enregistre, retour a cette liste, filtres compris. -#}
+                        <a href="{{ path('admin_loan_new', {id: book.id, retour: app.request.requestUri}) }}" class="btn btn-ghost px-3 text-sm">Prêter</a>
                     {% else %}
                         <form method="post" action="{{ path('admin_loan_return', {id: book.activeLoan.id}) }}">
                             <input type="hidden" name="_token" value="{{ csrf_token('rendre-pret-' ~ book.activeLoan.id) }}">

@@ -68,7 +68,7 @@
     {% else %}
         <p class="alert alert-success mt-5"><strong class="font-medium">Disponible</strong></p>
         <div class="mt-3">
-            <a href="{{ path('admin_loan_new', {id: book.id}) }}" class="btn btn-primary">Prêter ce livre</a>
+            <a href="{{ path('admin_loan_new', {id: book.id, retour: app.request.requestUri}) }}" class="btn btn-primary">Prêter ce livre</a>
         </div>
     {% endif %}
 

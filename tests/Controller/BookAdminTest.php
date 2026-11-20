@@ -160,7 +160,8 @@ class BookAdminTest extends AdminWebTestCase
         $this->client->request('GET', '/admin/livres/'.$book->getId());
 
         self::assertSelectorTextContains('main', 'Disponible');
-        self::assertSelectorTextContains('a[href="/admin/prets/livre/'.$book->getId().'/nouveau"]', 'Prêter ce livre');
+        // « Commence par » : le lien porte aussi son chemin de retour (?retour=…).
+        self::assertSelectorTextContains('a[href^="/admin/prets/livre/'.$book->getId().'/nouveau"]', 'Prêter ce livre');
         self::assertSelectorTextContains('main', 'jamais été prêté');
     }
 

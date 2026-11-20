@@ -272,7 +272,7 @@ tests/                      PHPUnit, sur une vraie base MySQL `app_test`
 | `admin_genre_edit` | GET, POST | `/admin/rayons/{id}/modifier` | Renommage |
 | `admin_genre_delete` | POST | `/admin/rayons/{id}/supprimer` | Suppression (CSRF), les livres restent |
 | `admin_loan_index` | GET | `/admin/prets` | Prêts en cours et derniers retours |
-| `admin_loan_new` | GET, POST | `/admin/prets/livre/{id}/nouveau` | Prêter un livre |
+| `admin_loan_new` | GET, POST | `/admin/prets/livre/{id}/nouveau?retour=…` | Prêter un livre, puis revenir à l'écran d'origine (`retour`, chemin `/admin…` seulement ; la liste des prêts à défaut) |
 | `admin_loan_return` | POST | `/admin/prets/{id}/rendre` | Retour (CSRF). Revient à l'écran d'origine (champ `retour`, chemin `/admin…` seulement). |
 | `admin_loan_extend` | POST | `/admin/prets/{id}/prolonger` | Prolongation (CSRF), même retour |
 

@@ -212,8 +212,10 @@ assets/
   fonts/                    Fraunces et Inter en woff2, sous-ensembles latin et latin-ext
   images/partage.png        aperçu des liens partagés (1200×630)
 config/                     configuration Symfony (sessions, sécurité, http_client…)
-deploy/                     livraison vers OVH : build.sh, release.sh, migrate.sh, backup.sh,
-                            et commun.sh (coordonnées et connexion SSH partagées)
+deploy/                     livraison vers OVH (release.sh orchestre build.sh, backup.sh,
+                            rafraichir.sh, controles.sh), migrate.sh, journaux.sh, dump.php
+                            (exécuté sur le serveur sans y être livré), et commun.sh
+                            (coordonnées et connexion SSH partagées)
 docker/                     image PHP 8.4 + Apache, php.ini, création de la base de test
 migrations/                 migrations Doctrine
 public/
@@ -519,8 +521,10 @@ make release
 Cette commande annonce les migrations que la livraison apporte, sauvegarde la base et les
 couvertures de production (voir [Sauvegardes](#sauvegardes)), construit et pousse la branche
 `deploy`, attend qu'OVH ait répliqué le commit livré, vide le cache de production, applique les
-migrations, puis vérifie que l'accueil répond 200 et que `.env.local` n'est pas servi. Une
-sauvegarde ratée arrête la livraison avant tout envoi.
+migrations, puis contrôle le site de l'extérieur (`make prod-check`, lançable à tout moment) :
+accueil et catalogue en 200, feuille de style compilée servie, **aucun cookie déposé sur
+l'accueil** (la promesse de `/confidentialite`) et `.env.local` refusé. Une sauvegarde ratée
+arrête la livraison avant tout envoi.
 
 Avant même de se connecter, elle refuse de partir :
 
@@ -546,14 +550,17 @@ BACKUP_DIR=backups                   # facultatif : dossier local des sauvegarde
 
 Pourquoi ne pas se contenter de pousser ? Entre le push et la réplication, le serveur sert les
 nouveaux assets avec les anciens gabarits encore en cache : la page sort à moitié habillée. Cela
-ressemble à un bug de CSS, alors que c'est un problème d'ordre des opérations.
+ressemble à un bug de CSS, alors que c'est un problème d'ordre des opérations. `make release`
+réduit cette fenêtre à quelques secondes, sans pouvoir l'annuler : OVH n'exécute rien de
+lui-même après la réplication.
 
 En cas de besoin, les étapes existent séparément, **sans aucun des contrôles ci-dessus** :
 
 ```bash
 make deploy            # construit la branche deploy, sans la pousser
-make deploy PUSH=1     # construit et pousse ; le cache reste alors à vider
-make prod-refresh      # vide le cache de production, à faire après tout push manuel
+make deploy PUSH=1     # construit et pousse ; cache et migrations restent à faire
+make prod-refresh      # après tout push manuel : vide le cache, applique les migrations
+make prod-check        # contrôle le site en ligne
 ```
 
 ### Livraison qui comporte une migration

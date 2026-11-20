@@ -30,7 +30,12 @@ echo "==> Dependances de production"
 
 echo "==> CSS et assets"
 mkdir -p "$DIST/var"
-cp -r var/tailwind "$DIST/var/"
+# Reprend le binaire Tailwind deja telecharge, pour ne pas le retelecharger a
+# chaque livraison. Sur un clone frais il n'existe pas encore : tailwind:build
+# le telecharge alors lui-meme.
+if [ -d var/tailwind ]; then
+    cp -r var/tailwind "$DIST/var/"
+fi
 (cd "$DIST" && APP_ENV=prod php bin/console tailwind:build --minify --quiet)
 (cd "$DIST" && APP_ENV=prod php bin/console asset-map:compile --quiet)
 

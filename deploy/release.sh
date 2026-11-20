@@ -173,7 +173,7 @@ while :; do
         echo "   Attendu sur le serveur : ${ATTENDU:0:7}" >&2
         echo "   Trouve                 : ${DISTANT:0:7}" >&2
         echo "   Ni cache vide, ni migrations appliquees. Relancez plus tard :" >&2
-        echo "   make prod-refresh, puis make migrate-prod RUN=1" >&2
+        echo "   make prod-refresh" >&2
         exit 1
     fi
 
@@ -181,39 +181,15 @@ while :; do
     sleep "$INTERVALLE"
 done
 
+# Le code tourne avec l'ancien cache jusqu'ici : quelques secondes inevitables,
+# OVH n'executant rien de lui-meme apres la replication.
 echo
-echo "==> Vidage du cache de production"
-distant "cd $DEPLOY_PATH && $DEPLOY_PHP bin/console cache:clear"
-
-# Apres le vidage : la migration tourne ainsi sur un code et un conteneur
-# coherents. Sans migration en attente, la commande ne fait rien.
-echo
-echo "==> Migrations"
-if ! distant "cd $DEPLOY_PATH && $DEPLOY_PHP bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration"; then
-    echo "!! Une migration a echoue : le site est peut-etre en erreur." >&2
-    echo "   Sauvegarde d'avant livraison : $(ls -t "${BACKUP_DIR:-backups}"/base-*.sql.gz 2>/dev/null | head -n 1)" >&2
-    echo "   Pour restaurer : README, section Sauvegardes." >&2
-    exit 1
-fi
+./deploy/rafraichir.sh
 
 # Controles finaux, seulement si l'URL publique est renseignee.
 if [ -n "${DEPLOY_URL:-}" ]; then
     echo
-    echo "==> Controles"
-
-    CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$DEPLOY_URL/" || echo 000)
-    echo "    page d'accueil : $CODE"
-    [ "$CODE" = "200" ] || { echo "!! Le site ne repond pas correctement." >&2; exit 1; }
-
-    # Le piege qui a deja coute une fuite : docroot pointant sur lesp et non
-    # lesp/public, rendant .env.local telechargeable.
-    CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$DEPLOY_URL/.env.local" || echo 000)
-    echo "    .env.local     : $CODE"
-    if [ "$CODE" = "200" ]; then
-        echo "!! .env.local est SERVI PUBLIQUEMENT. Le dossier racine du domaine doit" >&2
-        echo "   pointer sur $DEPLOY_PATH/public, pas sur $DEPLOY_PATH." >&2
-        exit 1
-    fi
+    ./deploy/controles.sh
 fi
 
 echo

@@ -42,6 +42,26 @@ class BookAdminTest extends AdminWebTestCase
     }
 
     /**
+     * La couverture se photographie et se redresse sur place (assets/lib/couverture.js,
+     * cover_capture_controller.js). Le champ d'origine reste celui qui part avec le
+     * formulaire, et seul a fonctionner sans JavaScript ; les champs de capture
+     * n'ont pas de nom, ils ne partent jamais.
+     */
+    public function testTheCoverCanBePhotographedAndStraightenedOnTheSpot(): void
+    {
+        $this->client->loginUser($this->createAdmin());
+        $this->client->request('GET', '/admin/livres/nouveau');
+
+        self::assertSelectorExists('[data-controller="cover-capture"] input[type="file"][name="book[coverFile]"][data-cover-capture-target="input"][accept="image/jpeg,image/png,image/webp"]');
+        self::assertSelectorExists('input[type="file"][capture="environment"][data-cover-capture-target="camera"]:not([name])');
+        self::assertSelectorTextContains('[data-cover-capture-target="actions"]', 'Photographier la couverture');
+        self::assertSelectorTextContains('[data-cover-capture-target="actions"]', 'Choisir une image');
+        self::assertSelectorExists('dialog[data-cover-capture-target="editor"]');
+        // La photo remplace la couverture que propose la recherche ISBN.
+        self::assertSelectorExists('[data-action~="cover-capture:remplacee->isbn-autofill#oublierCouverture"]');
+    }
+
+    /**
      * Scanner a la chaine imposait un clic sur « Activer la camera » par livre :
      * elle s'allume desormais seule (barcode_scanner_controller.js), et la page
      * s'ouvre dans cet etat, Arreter visible, Activer en reserve.

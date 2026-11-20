@@ -50,8 +50,9 @@ assets: ## Recompile Tailwind puis vide les caches
 	php bin/console tailwind:build
 	@$(MAKE) --no-print-directory cc
 
-test: ## Lance la suite de tests
+test: ## Lance la suite de tests (PHPUnit, puis tests/js si Node est installe)
 	php bin/phpunit
+	@if command -v node >/dev/null 2>&1; then node --test tests/js/*.test.mjs; else echo "Node absent : tests JS sautes (tests/js)"; fi
 
 lint: ## Verifie gabarits, conteneur et schema
 	php bin/console lint:twig templates

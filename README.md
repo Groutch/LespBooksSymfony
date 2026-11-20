@@ -48,6 +48,12 @@ Réservé aux comptes `ROLE_ADMIN`. L'interface dit « Gestion »
   publique. On y arrive par le scan d'un livre connu, depuis les listes, après une modification
   et après un ajout fait sans ISBN. « le ranger » et « Changer de place » y ouvrent une page
   courte, le rayon en grandes cases et la position sur l'étagère, au lieu du formulaire complet.
+- **Photo de couverture** : « Photographier la couverture » ouvre l'appareil photo du téléphone,
+  sans passer par sa galerie. Le cadre se pose seul sur le livre, quatre poignées permettent de
+  l'ajuster (et deux boutons de tourner la photo), puis la couverture est redressée à plat, dans
+  ses vraies proportions, et légèrement rehaussée avant l'envoi. Tout est calculé dans le
+  navigateur, sans dépendance (`assets/lib/couverture.js`) ; « Choisir une image » passe par le
+  même recadrage.
 - **Livres** : la même recherche que le catalogue public, filtres compris (rayon, catégorie,
   année, disponibilité), avec le rayon et la position de chaque livre ; ajout sans ISBN,
   modification, remplacement de la couverture, suppression.
@@ -508,6 +514,10 @@ php bin/phpunit --filter testABookCannotBeLentTwiceAtTheSameTime tests/Controlle
   catalogue est un `<article>`, le manifeste PWA et le `theme-color` sienne n'apparaissent que dans
   la mise en page de la gestion, et les balises `title`, `description`, `og:*` et `robots` sont
   contrôlées par `PageMetadataTest`.
+- Le redressement des couvertures (`assets/lib/couverture.js`) a ses tests JavaScript dans
+  `tests/js/`, sur des photos synthétiques dont on connaît les vrais coins (livre de face, de
+  travers, en perspective, câbles sur la table, table vide). `make test` les lance quand Node
+  est installé (`node --test`, aucune dépendance npm) ; Node n'est jamais requis sur l'hébergement.
 - Les pages d'erreur sont testées par l'aperçu `/_error/{code}`, ouvert aussi en environnement de
   test, car les tests tournent en mode debug.
 

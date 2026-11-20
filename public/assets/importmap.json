@@ -8,7 +8,7 @@
         "type": "js"
     },
     "\/assets\/@symfony\/stimulus-bundle\/controllers.js": {
-        "path": "\/assets\/@symfony\/stimulus-bundle\/controllers--X9ZmeZ.js",
+        "path": "\/assets\/@symfony\/stimulus-bundle\/controllers-1NKN7iZ.js",
         "type": "js"
     },
     "\/assets\/@symfony\/ux-turbo\/turbo_controller.js": {
@@ -24,11 +24,19 @@
         "type": "js"
     },
     "\/assets\/controllers\/isbn_autofill_controller.js": {
-        "path": "\/assets\/controllers\/isbn_autofill_controller-I1CWm6t.js",
+        "path": "\/assets\/controllers\/isbn_autofill_controller-IYY0REq.js",
         "type": "js"
     },
     "\/assets\/controllers\/pwa_install_controller.js": {
         "path": "\/assets\/controllers\/pwa_install_controller-C5XqaXs.js",
+        "type": "js"
+    },
+    "\/assets\/controllers\/cover_capture_controller.js": {
+        "path": "\/assets\/controllers\/cover_capture_controller-w7vPTNv.js",
+        "type": "js"
+    },
+    "\/assets\/lib\/couverture.js": {
+        "path": "\/assets\/lib\/couverture-ox39AiM.js",
         "type": "js"
     },
     "\/assets\/controllers\/csrf_protection_controller.js": {
@@ -36,7 +44,7 @@
         "type": "js"
     },
     "\/assets\/styles\/app.css": {
-        "path": "\/assets\/styles\/app-3A-gpVq.css",
+        "path": "\/assets\/styles\/app-9X-cOx-.css",
         "type": "css"
     },
     "@hotwired\/stimulus": {

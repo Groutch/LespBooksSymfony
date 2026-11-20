@@ -67,13 +67,33 @@ export default class extends Controller {
         this.fill('isbn10', book.isbn10);
         this.fill('description', book.description);
 
-        if (book.coverUrl && this.hasCoverUrlTarget) {
+        // Les sources repondent en plusieurs secondes : la couverture a pu etre
+        // photographiee entre-temps, et la photo l'emporte.
+        if (book.coverUrl && this.hasCoverUrlTarget && !this.couverturePhotographiee) {
             this.coverUrlTarget.value = book.coverUrl;
 
             if (this.hasCoverPreviewTarget) {
                 this.coverPreviewTarget.src = book.coverUrl;
                 this.coverPreviewTarget.classList.remove('hidden');
             }
+        }
+    }
+
+    /**
+     * Une couverture photographiee (cover_capture_controller.js) remplace celle
+     * que proposent les sources : on ne l'affiche plus — deux couvertures a
+     * l'ecran, on ne saurait laquelle part — et on ne la telecharge plus a
+     * l'enregistrement, ou elle serait conservee pour rien.
+     */
+    oublierCouverture() {
+        this.couverturePhotographiee = true;
+
+        if (this.hasCoverUrlTarget) {
+            this.coverUrlTarget.value = '';
+        }
+
+        if (this.hasCoverPreviewTarget) {
+            this.coverPreviewTarget.classList.add('hidden');
         }
     }
 

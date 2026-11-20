@@ -8,7 +8,10 @@
 {% block title %}Ajouter un livre{% endblock %}
 
 {% block admin_content %}
+{#- Une couverture photographiee remplace celle que la recherche ISBN propose
+    (cover_capture_controller.js emet l'evenement). -#}
 <div data-controller="isbn-autofill"
+     data-action="cover-capture:remplacee->isbn-autofill#oublierCouverture"
      data-isbn-autofill-lookup-url-value="{{ path('admin_book_lookup', {isbn: '0000000000000'}) }}"
      data-isbn-autofill-isbn-value="{{ prefillIsbn ?? '' }}">
 

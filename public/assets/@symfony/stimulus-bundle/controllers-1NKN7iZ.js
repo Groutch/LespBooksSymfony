@@ -4,5 +4,5 @@ import controller_1 from "../../controllers/barcode_scanner_controller.js";
 import controller_2 from "../../controllers/isbn_autofill_controller.js";
 import controller_3 from "../../controllers/pwa_install_controller.js";
 export const eagerControllers = {"symfony--ux-turbo--turbo-core": controller_0, "barcode-scanner": controller_1, "isbn-autofill": controller_2, "pwa-install": controller_3};
-export const lazyControllers = {"csrf-protection": () => import("../../controllers/csrf_protection_controller.js")};
+export const lazyControllers = {"cover-capture": () => import("../../controllers/cover_capture_controller.js"), "csrf-protection": () => import("../../controllers/csrf_protection_controller.js")};
 export const isApplicationDebug = false;

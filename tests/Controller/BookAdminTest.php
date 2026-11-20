@@ -42,6 +42,22 @@ class BookAdminTest extends AdminWebTestCase
     }
 
     /**
+     * Scanner a la chaine imposait un clic sur « Activer la camera » par livre :
+     * elle s'allume desormais seule (barcode_scanner_controller.js), et la page
+     * s'ouvre dans cet etat, Arreter visible, Activer en reserve.
+     */
+    public function testTheScannerOpensWithTheCameraStarting(): void
+    {
+        $this->client->loginUser($this->createAdmin());
+        $this->client->request('GET', '/admin/livres/scanner');
+
+        self::assertSelectorTextContains('[data-barcode-scanner-target="statusText"]', 'Activation de la caméra');
+        self::assertSelectorExists('[data-barcode-scanner-target="startButton"].hidden');
+        self::assertSelectorNotExists('[data-barcode-scanner-target="stopButton"].hidden');
+        self::assertSelectorTextContains('[data-barcode-scanner-target="stopButton"]', 'Arrêter la caméra');
+    }
+
+    /**
      * Le scanner ne doit interroger que la base : c'est ce qui evite de lancer
      * MetadataFetcher deux fois par livre, une fois pour rien.
      */

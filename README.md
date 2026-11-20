@@ -335,8 +335,11 @@ requête en base. Les métadonnées sont l'affaire du formulaire. Confondre les 
 la recherche externe deux fois par livre, soit huit secondes d'attente dont quatre pour un
 résultat jeté.
 
-Côté navigateur, `barcode_scanner_controller.js` lit le code avec `BarcodeDetector`, ou ZXing à
-défaut, puis vibre et maintient une confirmation au moins 700 ms. Sans ce délai, le bénévole ne
+Côté navigateur, `barcode_scanner_controller.js` allume la caméra dès l'ouverture du scanner
+(un clic par livre cassait le rythme d'une série), lit le code avec `BarcodeDetector`, ou ZXing à
+défaut, puis vibre et maintient une confirmation au moins 700 ms. Un code qui n'est pas un livre
+(étiquette de prix, code magasin) est signalé, puis ignoré s'il reste dans le champ, et la
+lecture reprend seule. Sans ce délai, le bénévole ne
 voyait qu'un clignotement et croyait à un plantage. `isbn_autofill_controller.js` ne remplit que
 les champs vides, pour ne jamais écraser une saisie en cours.
 

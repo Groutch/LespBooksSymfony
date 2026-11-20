@@ -7,45 +7,88 @@ import { Controller } from '@hotwired/stimulus';
  * Safari/iOS ne l'implemente pas, d'ou le repli sur ZXing.
  */
 export default class extends Controller {
-    static targets = ['video', 'status', 'statusText', 'spinner', 'manual', 'confirmation', 'detected'];
+    static targets = ['video', 'status', 'statusText', 'spinner', 'manual', 'confirmation', 'detected', 'startButton', 'stopButton'];
     static values = { checkUrl: String, newUrl: String };
 
     connect() {
         this.stream = null;
         this.zxingControls = null;
-        this.stopped = false;
+        this.stopped = true;
         this.detectedAt = null;
+        this.resumeTimer = null;
+        // Chaque arret invalide les demarrages encore en vol (voir start()).
+        this.generation = 0;
+        // Dernier code refuse (pas un livre) : tant qu'il reste devant l'objectif,
+        // la camera le relirait a chaque reprise, message et vibration en boucle.
+        this.ignoredCode = null;
+
+        // La camera s'allume d'elle-meme : scanner a la chaine imposait un clic
+        // par livre, au retour de chaque enregistrement. Pas pendant l'apercu que
+        // Turbo affiche depuis son cache au retour arriere : la vraie page suit
+        // aussitot, et c'est elle qui l'allume.
+        if (!document.documentElement.hasAttribute('data-turbo-preview')) {
+            this.start();
+        }
     }
 
     disconnect() {
+        clearTimeout(this.resumeTimer);
         this.stop();
     }
 
     async start() {
+        clearTimeout(this.resumeTimer);
+        // Jamais deux flux a la fois : un second clic, ou une reprise automatique,
+        // repart d'une camera eteinte.
+        this.stop();
         this.stopped = false;
+        const generation = this.generation;
+
         this.detectedAt = null;
         this.hideConfirmation();
         this.setSpinner(false);
+        this.showRunning(true);
         this.setStatus('Activation de la caméra…');
 
+        let stream;
         try {
-            this.stream = await navigator.mediaDevices.getUserMedia({
+            stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: 'environment' },
             });
         } catch (error) {
-            this.setStatus("Caméra inaccessible. Vérifiez l'autorisation, ou saisissez l'ISBN à la main.", true);
+            if (generation === this.generation) {
+                this.showRunning(false);
+                this.setStatus("Caméra inaccessible. Vérifiez l'autorisation, ou saisissez l'ISBN à la main.", true);
+            }
             return;
         }
 
+        // Arrete pendant la demande d'autorisation (page quittee, second clic) :
+        // ce flux arrive trop tard, il faut l'eteindre aussitot, sinon le voyant
+        // de la camera reste allume sans plus aucune page pour le couper.
+        if (generation !== this.generation) {
+            stream.getTracks().forEach((track) => track.stop());
+            return;
+        }
+
+        this.stream = stream;
         this.videoTarget.srcObject = this.stream;
         this.videoTarget.classList.remove('hidden');
-        await this.videoTarget.play();
+
+        try {
+            await this.videoTarget.play();
+        } catch (error) {
+            // Interrompu par un arret entre-temps : rien a faire.
+            return;
+        }
+
+        if (generation !== this.generation) return;
+
+        this.setStatus('Visez le code-barres au dos du livre.');
 
         if ('BarcodeDetector' in window) {
-            this.setStatus('Visez le code-barres au dos du livre.');
             await this.scanWithNativeDetector();
         } else {
-            this.setStatus('Visez le code-barres au dos du livre.');
             await this.scanWithZxing();
         }
     }
@@ -58,8 +101,7 @@ export default class extends Controller {
 
             try {
                 const codes = await detector.detect(this.videoTarget);
-                if (codes.length > 0) {
-                    this.handleCode(codes[0].rawValue);
+                if (codes.length > 0 && this.handleCode(codes[0].rawValue)) {
                     return;
                 }
             } catch (error) {
@@ -83,7 +125,15 @@ export default class extends Controller {
         });
     }
 
+    /**
+     * @returns {boolean} faux si le code est ignore : la lecture continue alors.
+     */
     handleCode(rawValue) {
+        if (rawValue === this.ignoredCode) {
+            return false;
+        }
+
+        this.ignoredCode = null;
         this.stop();
         this.detectedAt = Date.now();
 
@@ -95,7 +145,9 @@ export default class extends Controller {
         }
 
         this.showConfirmation(rawValue);
-        this.lookup(rawValue);
+        this.lookup(rawValue, true);
+
+        return true;
     }
 
     showConfirmation(rawValue) {
@@ -136,12 +188,19 @@ export default class extends Controller {
         }
     }
 
+    /**
+     * Saisir l'ISBN a la main, c'est renoncer a la camera pour ce livre : elle
+     * s'eteint, et ne reprend pas seule si la saisie est invalide.
+     */
     submitManual(event) {
         event.preventDefault();
         const value = this.manualTarget.value.trim();
 
         if (value !== '') {
-            this.lookup(value);
+            clearTimeout(this.resumeTimer);
+            this.stop();
+            this.showRunning(false);
+            this.lookup(value, false);
         }
     }
 
@@ -151,7 +210,7 @@ export default class extends Controller {
      * les cherche pendant que le benevole le decouvre. Les demander ici aussi
      * ajoutait quatre secondes d'attente pour un resultat jete.
      */
-    async lookup(isbn) {
+    async lookup(isbn, fromCamera) {
         const cleaned = isbn.replace(/[^0-9Xx]/g, '');
         this.setStatus('Recherche du livre…');
         this.setSpinner(true);
@@ -161,8 +220,19 @@ export default class extends Controller {
                 headers: { Accept: 'application/json' },
             });
 
+            if (response.status === 422) {
+                // Code lu correctement, mais pas un livre : etiquette de prix, code
+                // magasin. En serie, la camera reprend d'elle-meme, en ignorant ce
+                // code s'il reste dans le champ.
+                if (fromCamera) {
+                    this.ignoredCode = isbn;
+                }
+                this.failed("Ce code n'est pas l'ISBN d'un livre. Visez le code-barres qui commence par 978 ou 979.", fromCamera);
+                return;
+            }
+
             if (!response.ok) {
-                this.failed("Ce code ne correspond pas à un ISBN de livre valide.");
+                this.failed('Vérification impossible. Réessayez dans un instant.');
                 return;
             }
 
@@ -184,13 +254,22 @@ export default class extends Controller {
 
     /**
      * Un echec rend la main : la confirmation verte disparait, sinon elle
-     * contredirait le message d'erreur affiche juste en dessous.
+     * contredirait le message d'erreur affiche juste en dessous. Apres un code
+     * de camera qui n'etait pas un livre, la camera reprend seule une fois le
+     * message lu ; apres une panne, elle attend qu'on la relance.
      */
-    failed(message) {
+    failed(message, resume = false) {
         this.hideConfirmation();
         this.setSpinner(false);
         this.detectedAt = null;
         this.setStatus(message, true);
+
+        if (resume) {
+            this.showRunning(true);
+            this.resumeTimer = setTimeout(() => this.start(), 2500);
+        } else {
+            this.showRunning(false);
+        }
     }
 
     /**
@@ -199,6 +278,7 @@ export default class extends Controller {
      */
     stop() {
         this.stopped = true;
+        this.generation += 1;
 
         if (this.zxingControls) {
             this.zxingControls.stop();
@@ -222,11 +302,28 @@ export default class extends Controller {
      * doit dire ce qui vient de se passer.
      */
     stopManually() {
+        clearTimeout(this.resumeTimer);
+        this.ignoredCode = null;
         this.stop();
         this.hideConfirmation();
         this.setSpinner(false);
         this.detectedAt = null;
+        this.showRunning(false);
         this.setStatus("Caméra arrêtée. Réactivez-la, ou saisissez l'ISBN à la main.");
+    }
+
+    /**
+     * Un seul des deux boutons a la fois. La classe `hidden` vit sur leur
+     * enveloppe : `btn` pose son propre display et l'emporterait sur elle.
+     */
+    showRunning(running) {
+        if (this.hasStartButtonTarget) {
+            this.startButtonTarget.classList.toggle('hidden', running);
+        }
+
+        if (this.hasStopButtonTarget) {
+            this.stopButtonTarget.classList.toggle('hidden', !running);
+        }
     }
 
     setStatus(message, isError = false) {

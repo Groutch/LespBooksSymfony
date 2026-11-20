@@ -581,6 +581,20 @@ make migrate-prod         # migrations en attente sur le serveur
 make migrate-prod RUN=1   # les applique, puis vide le cache
 ```
 
+### Journaux de production
+
+```bash
+make prod-logs          # 100 dernières lignes du journal d'erreurs le plus récent
+make prod-logs N=500
+```
+
+En production, les erreurs s'écrivent sur l'hébergement dans `var/log/prod-AAAA-MM-JJ.log`, un
+fichier par jour gardé 14 jours (`config/packages/monolog.yaml`) — et non dans les journaux
+Apache de l'espace client, illisibles en SSH. Rien ne s'y écrit tant que tout va bien : à la
+première erreur d'une requête, Monolog écrit l'erreur et les messages qui la précèdent, sauf ceux
+de Doctrine, dont le SQL porterait des noms d'emprunteurs. Les avis de dépréciation vont à part,
+dans `prod.deprecations-AAAA-MM-JJ.log`.
+
 ### Sauvegardes
 
 ```bash

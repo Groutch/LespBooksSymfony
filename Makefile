@@ -11,7 +11,7 @@ DEPLOY_PATH ?= lesp
 DEPLOY_PHP ?= php
 
 .DEFAULT_GOAL := help
-.PHONY: help up stop down restart logs shell cc assets test lint migrate deploy release backup ssh-key migrate-prod prod-refresh
+.PHONY: help up stop down restart logs shell cc assets test lint migrate deploy release backup ssh-key migrate-prod prod-logs prod-refresh
 
 help: ## Affiche cette aide
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -71,6 +71,9 @@ backup: ## Sauvegarde la base et les couvertures de production dans backups/
 
 migrate-prod: ## Migrations sur l'hebergement (make migrate-prod RUN=1 pour appliquer)
 	./deploy/migrate.sh $(if $(RUN),--run,)
+
+prod-logs: ## Fin du journal d'erreurs de production le plus recent (N=lignes, 100 par defaut)
+	./deploy/journaux.sh $(N)
 
 prod-refresh: ## Indispensable apres chaque deploiement : vide le cache de production
 	ssh $(DEPLOY_SSH) 'cd $(DEPLOY_PATH) && git log -1 --oneline && $(DEPLOY_PHP) bin/console cache:clear'

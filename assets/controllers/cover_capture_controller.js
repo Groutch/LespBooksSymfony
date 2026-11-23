@@ -312,6 +312,14 @@ export default class extends Controller {
     }
 
     /**
+     * Appui long sur une poignee : sans cela, le telephone selectionne le texte
+     * de la page derriere, et son menu de copie masque la loupe.
+     */
+    bloquer(event) {
+        event.preventDefault();
+    }
+
+    /**
      * Loupe au-dessus du doigt, comme celle de l'appareil photo : la zone de la
      * photo autour du coin saisi, grossie, avec le cadre et un repere au centre.
      * Placee du cote oppose a la poignee, pour que le doigt ne la cache pas.

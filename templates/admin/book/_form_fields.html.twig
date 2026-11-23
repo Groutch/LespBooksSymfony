@@ -67,8 +67,9 @@
     `hidden` vit sur les enveloppes des volets, dont rien d'autre ne fixe le display. -#}
 {% macro recadrage() %}
     <dialog data-cover-capture-target="editor" aria-label="Photo de couverture"
-            data-action="resize@window->cover-capture#dessinerCadre close->cover-capture#ferme"
-            class="m-0 h-dvh max-h-none w-screen max-w-none bg-ink p-0 text-paper backdrop:bg-ink">
+            data-action="resize@window->cover-capture#dessinerCadre close->cover-capture#ferme contextmenu->cover-capture#bloquer"
+            style="-webkit-touch-callout: none"
+            class="m-0 h-dvh max-h-none w-screen max-w-none select-none bg-ink p-0 text-paper backdrop:bg-ink">
         <div data-cover-capture-target="viseur" class="hidden h-full">
             <div class="flex h-full flex-col pt-[env(safe-area-inset-top)]">
                 <div class="flex items-center gap-2 px-2 pt-2">

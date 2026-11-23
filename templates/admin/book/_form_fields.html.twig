@@ -111,9 +111,14 @@
                          data-action="pointerdown->cover-capture#saisir pointermove->cover-capture#deplacer pointerup->cover-capture#lacher pointercancel->cover-capture#lacher">
                         <polygon data-cover-capture-target="polygon" class="fill-paper/15 stroke-paper"></polygon>
                         {% for coin in 1..4 %}
-                            <circle data-cover-capture-target="handle" class="fill-accent stroke-paper"></circle>
+                            <circle data-cover-capture-target="handle" class="fill-accent/50 stroke-paper"></circle>
                         {% endfor %}
                     </svg>
+                    {#- Loupe affichee pendant qu'un doigt tient un coin : la zone grossie
+                        sous le doigt, pour placer le coin a la pixel pres. Hors du SVG,
+                        et sans pointeur, pour ne rien prendre au doigt. -#}
+                    <canvas data-cover-capture-target="loupe" aria-hidden="true"
+                            class="pointer-events-none absolute hidden size-32 rounded-full border-2 border-paper shadow-cover-lg"></canvas>
                 </div>
             </div>
 

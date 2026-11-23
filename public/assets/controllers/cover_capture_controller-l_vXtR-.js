@@ -16,6 +16,9 @@ const COTE_SORTIE = 1600;
 /** Rayon des poignees a l'ecran, et distance a laquelle un doigt les attrape (44 px, cible tactile). */
 const RAYON_POIGNEE = 14;
 const PORTEE_DOIGT = 44;
+/** Loupe au-dessus du doigt : taille a l'ecran (128 px, comme size-32) et grossissement. */
+const TAILLE_LOUPE = 128;
+const GROSSISSEMENT_LOUPE = 3;
 
 /**
  * Photographier une couverture comme on numerise un document : un viseur dans
@@ -36,7 +39,7 @@ export default class extends Controller {
     static targets = [
         'input', 'actions', 'camera', 'gallery', 'result', 'message', 'editor',
         'viseur', 'video', 'viseurStatus', 'shutter', 'natif',
-        'recadreur', 'canvas', 'overlay', 'polygon', 'handle', 'status', 'validate',
+        'recadreur', 'canvas', 'overlay', 'polygon', 'handle', 'loupe', 'status', 'validate',
     ];
 
     connect() {
@@ -201,6 +204,8 @@ export default class extends Controller {
     // --- Recadrage ---------------------------------------------------------------
 
     ouvrirRecadrage() {
+        this.saisi = null;
+        this.loupeTarget.classList.add('hidden');
         this.afficherVolet('recadreur');
         if (!this.editorTarget.open) this.editorTarget.showModal();
         this.poserCadre();
@@ -288,6 +293,8 @@ export default class extends Controller {
 
         this.saisi = proche;
         this.overlayTarget.setPointerCapture(event.pointerId);
+        this.loupeTarget.classList.remove('hidden');
+        this.dessinerLoupe();
         event.preventDefault();
     }
 
@@ -296,10 +303,74 @@ export default class extends Controller {
 
         this.coins[this.saisi] = this.pointPhoto(event);
         this.dessinerCadre();
+        this.dessinerLoupe();
     }
 
     lacher() {
         this.saisi = null;
+        this.loupeTarget.classList.add('hidden');
+    }
+
+    /**
+     * Loupe au-dessus du doigt, comme celle de l'appareil photo : la zone de la
+     * photo autour du coin saisi, grossie, avec le cadre et un repere au centre.
+     * Placee du cote oppose a la poignee, pour que le doigt ne la cache pas.
+     */
+    dessinerLoupe() {
+        if (this.saisi === null) return;
+
+        const boite = this.overlayTarget.getBoundingClientRect();
+        const coin = this.coins[this.saisi];
+        const marge = 8;
+        const surEcran = {
+            x: (coin.x / this.photo.width) * boite.width,
+            y: (coin.y / this.photo.height) * boite.height,
+        };
+        const haut = surEcran.y > boite.height / 2 ? marge : boite.height - TAILLE_LOUPE - marge;
+        const gauche = Math.min(Math.max(surEcran.x - TAILLE_LOUPE / 2, marge), boite.width - TAILLE_LOUPE - marge);
+        this.loupeTarget.style.top = `${haut}px`;
+        this.loupeTarget.style.left = `${gauche}px`;
+
+        // Taille de la zone copiee, en pixels de photo. Le canvas a le double de sa
+        // taille affichee, pour rester net sur les ecrans haute densite.
+        const cote = (TAILLE_LOUPE / GROSSISSEMENT_LOUPE) * this.echelle();
+        if (this.loupeTarget.width !== 2 * TAILLE_LOUPE) {
+            this.loupeTarget.width = 2 * TAILLE_LOUPE;
+            this.loupeTarget.height = 2 * TAILLE_LOUPE;
+        }
+        const taille = this.loupeTarget.width;
+        const k = taille / cote;
+        const sx = coin.x - cote / 2;
+        const sy = coin.y - cote / 2;
+
+        const contexte = this.loupeTarget.getContext('2d');
+        contexte.clearRect(0, 0, taille, taille);
+        contexte.drawImage(this.photo, sx, sy, cote, cote, 0, 0, taille, taille);
+
+        // Le cadre passe dans la loupe, pour voir l'arete qu'on vise.
+        contexte.beginPath();
+        this.coins.forEach(({ x, y }, i) => {
+            const px = (x - sx) * k;
+            const py = (y - sy) * k;
+            if (i === 0) contexte.moveTo(px, py);
+            else contexte.lineTo(px, py);
+        });
+        contexte.closePath();
+        contexte.lineWidth = 3;
+        contexte.strokeStyle = '#f7f3ec';
+        contexte.stroke();
+
+        // Repere au centre : le coin saisi se trouve la, sous le doigt.
+        const centre = taille / 2;
+        const bras = 14;
+        contexte.beginPath();
+        contexte.moveTo(centre - bras, centre);
+        contexte.lineTo(centre + bras, centre);
+        contexte.moveTo(centre, centre - bras);
+        contexte.lineTo(centre, centre + bras);
+        contexte.lineWidth = 2;
+        contexte.strokeStyle = '#f7f3ec';
+        contexte.stroke();
     }
 
     /** Un quart de tour : la detection reprend sur la photo tournee. */
